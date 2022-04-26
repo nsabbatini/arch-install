@@ -1,0 +1,368 @@
+# ##################
+# Basic preparations
+# ##################
+
+# Provide internet connectivity (not needed in virtual machine)
+iwctl help
+iwctl device list
+iwctl station wlan0 scan
+iwctl station wlan0 get-networks
+iwctl --passphrase Borboleta station wlan0 connect Sabbatini
+iwctl known-networks list
+ping archlinux.org
+
+# Set time zone
+timedatectl set-ntp true
+timedatectl set-timezone America/Sao_Paulo
+timedatectl status
+
+# See if the mirror list is ok
+vim /etc/pacman.d/mirrorlist
+
+
+# ################
+# Prepare the disk
+# ################
+
+# See which disk will be partitioned, then apply gpt label
+parted -l
+parted /dev/nvme0n1 mklabel gpt
+# Make the efi partition (check that the disk has 512-byte sectors)
+parted /dev/nvme0n1
+   mkpart primary fat32 2048s 1050623s
+   set 1 boot on
+   unit MiB
+   print
+   mkpart primary ext4 1050624s 100%
+   print
+   q
+
+# Format the partitions
+mkfs.fat -F32 /dev/nvme0n1p1
+mkfs.ext4 /dev/nvme0n1p2
+
+# Mount the root partition under /mnt
+mount /dev/nvme0n1p2 /mnt
+
+# Make a boot directory and mount the efi partition
+mkdir /mnt/boot
+mount /dev/nvme0n1p1 /mnt/boot/
+mkdir /mnt/etc
+
+# Generate a file system table file
+genfstab -U -p /mnt >> /mnt/etc/fstab
+
+
+# ############################################
+# Install core components and chroot to system
+# ############################################
+
+# Install base system and linux kernel
+pacstrap -i /mnt base base-devel linux linux-firmware linux-headers intel-ucode vim git
+
+# Change root
+arch-chroot /mnt
+
+# Set root password
+passwd
+
+# Download arch-install from github
+git clone git@github.com:nsabbatini/arch-install.git
+
+# ##########################################
+# The following script does the following:
+# - create swap file
+# - set locale, timezone, keyboard
+# - set hostname and create /etc/hosts
+# - install basic packages using pacman
+# - install and configure systemd bootloader
+# - creates user with default password
+# ##########################################
+./arch-install/basic.sh
+
+# Setup sudo previleges
+visudo
+  %wheel ALL=(ALL) NOPASSWD: ALL
+
+# reboot
+exit
+umount -a
+poweroff
+
+# Remove installation media, boot and login
+
+# login to wifi
+#nmcli device wifi connect Sabbatini password <passwd>
+
+# Update system
+sudo pacman -Syu
+
+# Install yay
+mkdir /home/narcizo/builds; cd /narcizo/home/builds
+git clone https://aur.archlinux.org/yay.git
+cd yay; makepkg -si
+
+# ###############
+# Install desktop
+# ###############
+
+# Install gnome
+sudo pacman -S gnome gnome-tweaks dconf-editor
+sudo pacman -S noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-roboto ttf-roboto-mono adobe-source-code-pro-fonts
+yay -S google-chrome chrome-gnome-shell warsaw-bin
+sudo systemctl enable gdm
+sudo systemctl enable warsaw
+# Configure warsaw in https://www.dieboldnixdorf.com.br/warsaw
+
+sudo reboot
+
+# Install fonts
+# gnome-terminal themes
+# http://mayccoll.github.io/Gogh/ - choose one or more color schemes for gnome-terminal, then run
+bash -c  "$(wget -qO- https://git.io/vQgMr)"
+
+
+# Install printter and scanner drivers; configure printer at http://127.0.0.1:631
+yay -S brother-dcp-b7520dw brscan4
+sudo brsaneconfig4 -a name=brscanner model=Brother_DCP_B7520DW ip=192.168.1.244
+brsaneconfig4 -q
+
+# LibreOffice
+sudo pacman -S libreoffice-fresh
+sudo pacman -S java-runtime java-environment pstoedit libmythes unixodbc coin-or-mp
+
+# Balena-etcher
+yay -S etcher-bin
+
+
+# ################################################
+# Generate ssh keys and mount sshfs disk on castor
+# ################################################
+
+ssh-keygen -t rsa
+ssh-copy-id pi@canario
+# If not installed yet, install ssh server in castor, following this link:
+# https://medium.com/rkttu/set-up-your-ssh-server-in-windows-10-native-way-1aab9021c3a6
+scp /home/narcizo/.ssh/id_rsa.pub narcizo@castor:/C:/Users/Narcizo/.ssh
+# In castor, open powershell with admin elevation:
+   cd C:\Users\Narcizo\.ssh
+   rename id_rsa.pub authorized_keys
+   $authorizedKeyFilePath = "C:\Users\Narcizo\.ssh\authorized_keys"
+   icacls.exe $authorizedKeyFilePath /remove “NT AUTHORITY\Authenticated Users”
+   icacls.exe $authorizedKeyFilePath /inheritance:r
+   Get-Acl “$env:ProgramData\ssh\ssh_host_dsa_key” | Set-Acl $authorizedKeyFilePath
+mkdir /home/narcizo/castor
+vim /home/narcizo/.profile
+   # Mount sshfs disk on castor
+   REMOTE="narci@192.168.1.42:/G:/Users/Narcizo/"
+   LOCAL="/home/narcizo/castor"
+   MOUNTED=$( /usr/bin/mount | grep -E "^${REMOTE}" | /usr/bin/awk '{print $3}' )
+
+   if [ -z "$MOUNTED" ] ; then
+      /usr/bin/sshfs $REMOTE $LOCAL -o uid=1000,gid=1000,reconnect,ServerAliveInterval=15,ServerAliveCountMax=3
+   fi
+
+
+# Remove orphaned packages
+pacman -Rns $(pacman -Qtdq)
+
+# Install vim plugin manager: https://github.com/junegunn/vim-plug
+# Current .vimrc is configured to autoload the manager and use the gruvbox plugin
+# If you add another plugin, load it by running the following:
+vim
+   :PlugInstall
+
+
+# ##############################
+# Set backup timer using systemd
+# ##############################
+
+# Hourly backup
+
+vim ~/.config/systemd/user/hourly-backup.service
+   [Unit]
+   Description="Hourly backup of home directory"
+   [Service]
+   Type=oneshot
+   ExecStart=/home/narcizo/bin/hourly-backup.sh
+
+vim ~/.config/systemd/user/hourly-backup.timer
+   [Unit]
+   Description="Hourly backup of home directory"
+   [Timer]
+   Persistent=false
+   OnCalendar=*-*-* *:15:00
+   Unit=hourly-backup.service
+   [Install]
+   WantedBy=timers.target
+
+# Enable the timer
+sudo systemctl daemon-reload
+systemctl --user enable --now hourly-backup.timer
+
+# Daily backup
+
+vim ~/.config/systemd/user/hourly-backup.service
+   [Unit]
+   Description="Daily backup of home directory"
+   [Service]
+   Type=oneshot
+   ExecStart=/home/narcizo/bin/daily-backup.sh
+
+vim ~/.config/systemd/user/hourly-backup.timer
+   [Unit]
+   Description="Daily backup of home directory"
+   [Timer]
+   Persistent=true
+   OnCalendar=*-*-* 12:50:00
+   RandomizedDelaySec=300
+   Unit=daily-backup.service
+   [Install]
+   WantedBy=timers.target
+
+# Enable the timer
+sudo systemctl daemon-reload
+systemctl --user enable --now daily-backup.timer
+
+
+# ###################
+# Install mail server
+# ###################
+
+/home/narcizo/bin/install-postfix.sh
+echo "[smtp.gmail.com]:587 narcizo.sabbatini@gmail.com:pnrlyntqnmzgdhrr" | sudo tee /etc/postfix/sasl_passwd
+sudo chmod 600 /etc/postfix/sasl_passwd
+sudo postmap hash:/etc/postfix/sasl_passwd
+sudo chmod u=rw,go= /etc/postfix/sasl_passwd
+sudo chmod u=rw,go= /etc/postfix/sasl_passwd.db
+sudo systemctl restart postfix
+# Fix aliases in /etc/aliases
+sudo newaliases
+# Specify the email in both "crontab -e" and "sudo crontab -e"
+MAILTO=Narcizo.Sabbatini@gmail.com
+
+
+# #########################################
+# Undervolt the CPU and limit package power
+# #########################################
+
+sudo pacman -S intel-undervolt
+sudo intel-undervolt read
+sudo vim /etc/intel-undervolt.conf
+   undervolt 0 'CPU' -50
+   undervolt 1 'GPU' -50
+   undervolt 2 'CPU Cache' -50
+   power package 25 15
+   tjoffset -10
+sudo intel-undervolt apply
+sudo systemctl enable --now intel-undervolt.service
+
+
+# ################################
+# Install firmware update software
+# ################################
+sudo pacman -S fwupd gnome-firmware
+
+
+# #########################
+# Managing flatpak programs
+# #########################
+## List remote packages (store)
+#flatpak remotes
+## Search a remote package
+#flatpak search gimp
+## To install applications
+#flatpak install gimp
+## Running an application
+#flatpak run org.gimp.GIMP
+## Update all gapplications
+#flatpak update
+## List installed applications and runtimes
+#flatpak list
+## Alternatively, to just list installed applications
+#flatpak list --app
+## Remove an application
+#flatpak uninstall org.gimp.GIMP
+
+
+# ############
+# Install snap
+# ############
+#yay -S snapd
+#sudo systemctl enable --now snapd.socket
+#sudo systemctl enable --now apparmor.service
+#sudo systemctl enable --now snapd.apparmor.service
+#sudo reboot
+#sudo snap install snap-store
+
+# ############
+# Install tlp
+# ############
+#sudo pacman -S tlp tlp-rdw powertop smartmontools x86_energy_perf_policy ethtool
+#sudo systemctl enable --now tlp
+#sudo systemctl mask systemd-rfkill.service
+#sudo systemctl mask systemd-rfkill.socket
+#sudo systemctl enable --now NetworkManager-dispatcher
+#configure /etc/tlp.conf
+#sudo tlp start
+#sudo tlp-stat -s
+#sudo powertop # check tunables
+
+
+# ##########
+# VirtualBox
+# ##########
+
+#sudo pacman -S virtualbox virtualbox-host-modules-arch
+#sudo modprobe vboxdrv
+#sudo usermod -aG vboxusers narcizo
+#yay -S virtualbox-ext-oracle
+##gsettings set org.gnome.mutter.wayland xwayland-grab-access-rules "['VirtualBox Machine']"
+## Open VirtualBox gui and create a VM: #CPUs: 2, Memory: 4G, Disk: 20G, enable EFI
+#vboxmanage setextradata "ArchLinux" CustomVideoMode1 "3840x2160x32"
+#vboxmanage controlvm "ArchLinux" setvideomodehint 3840 2160 32 # after starting vm
+
+# ########################
+# qemu/kvm virtual machine
+# ########################
+
+## Install libvert and qemu (gnome-boxes has them already installed)
+#sudo pacman -S --needed libvirt qemu dmidecode
+
+## Network connectivity (NAT/DHCP)
+#sudo pacman -S ebtables dnsmasq
+
+## Support for EFI
+#sudo pacman -S edk2-ovmf
+
+## Install clients (gnome-boxes is already installed)
+#sudo pacman -S virt-manager
+
+## Allow users in wheel group to manage libvirt
+#sudo vim /etc/polkit-1/rules.d/50-libvirtd.rules
+#   /* Allow users in kvm group to manage the libvirt
+#      daemon without authentication */
+#   polkit.addRule(function(action, subject) {
+#       if (action.id == "org.libvirt.unix.manage" &&
+#           subject.isInGroup("wheel")) {
+#               return polkit.Result.YES;
+#       }
+#   });
+
+## Add user to group libvirt
+#sudo usermod -a -G libvirt narcizo
+#sudo usermod -a -G kvm narcizo
+
+## Start daemons
+#sudo systemctl enable libvirtd.service
+
+## Reboot to apply groups and activate daemon
+#sudo reboot
+
+## Start network interface
+#virsh -c qemu:///system net-autostart default
+#virsh -c qemu:///system net-start default
+
+## Open virt-manager gui with in Gnome desktop or with the command
+## VM images are stored in /var/lib/libvirt/images
+#virt-manager&

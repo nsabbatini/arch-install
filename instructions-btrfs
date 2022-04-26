@@ -1,0 +1,526 @@
+# ##################
+# Basic preparations
+# ##################
+
+# Provide internet connectivity
+iwctl help
+iwctl device list
+iwctl station wlan0 scan
+iwctl station wlan0 get-networks
+iwctl --passphrase Borboleta station wlan0 connect Sabbatini
+iwctl known-networks list
+ping archlinux.org
+
+# Set time zone
+timedatectl set-ntp true
+timedatectl set-timezone America/Sao_Paulo
+timedatectl status
+
+# See if the mirror list is ok
+vim /etc/pacman.d/mirrorlist
+
+# ################
+# Prepare the disk
+# ################
+
+gdisk /dev/nvme0n1
+    create EFI partition: n
+        Partition number: 1
+        First Sector: <default>
+        Last Sector: +300M
+        Hex code or GUID: ef00
+    create root partition: n
+        Partition number: 2
+        First Sector: <default>
+        Last Sector: <default>
+        Hex code or GUID: <default>
+    write changes: w
+
+# Inspect the partitions
+lsblk
+
+# Format the EFI partitions
+mkfs.fat -F32 /dev/nvme0n1p1
+
+# Setup encryption on the root partition
+cryptsetup --cipher aes-xts-plain64 --hash sha512 --use-random --verify-passphrase luksFormat /dev/nvme0n1p2
+    YES
+    <passphrase>
+
+# Open the encrypted partition
+cryptsetup luksOpen /dev/nvme0n1p2 root
+    <passphrase>
+
+# Format the root partition
+mkfs.btrfs /dev/mapper/root
+
+# Inspect again
+lsblk
+
+# Mount the root partition under /mnt
+mount /dev/mapper/root /mnt
+
+# Create sub-volumes
+cd /mnt
+btrfs subvolume create @
+btrfs subvolume create @home
+
+# Mount the sub-volumes in the root partition
+cd
+umount /mnt
+mount -o noatime,space_cache=v2,compress=zstd,ssd,discard=async,subvol=@ /dev/mapper/root /mnt
+mkdir /mnt/{boot,home}
+mount -o noatime,space_cache=v2,compress=zstd,ssd,discard=async,subvol=@home /dev/mapper/root /mnt/home
+mount /dev/nvme0n1p1 /mnt/boot
+
+# Install bootstrap packages
+pacstrap -i /mnt base base-devel linux linux-firmware linux-headers intel-ucode git vim
+
+# Generate a file system table file
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# Change root
+arch-chroot /mnt
+
+# Include support for btrfs and encryption in mkinitcpio
+vim /etc/mkinitcpio.conf
+    MODULES=(btrfs)
+    HOOKS=(base udev autodetect modconf block encrypt filesystems keyboard fsch)
+mkinitcpio -p linux
+
+# Set root password
+passwd
+
+# ############################################
+# Swap file, location, time zone, hostname
+# ############################################
+
+# Create swap file
+#dd if=/dev/zero of=/swapfile bs=1M count=2048 status=progress
+#chmod 600 /swapfile
+#mkswap /swapfile
+#echo '/swapfile none swap defaults 0 0' | tee -a /etc/fstab
+
+# Set the time zone and enable hardware clock
+ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+hwclock --systohc
+
+# Edit the locale.gen file and generate the locales
+sed -ie 's/^#en_US.UTF-8/en_US.UTF-8/g' /etc/locale.gen
+locale-gen
+
+# Create locales config file and set the LANG variable
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+# Create keyblard config file and set KEYMAP variable
+echo "KEYMAP=br-latin1-us" > /etc/vconsole.conf
+
+# Configure hostname and /etc/hosts
+echo "lince" > /etc/hostname
+{ echo "127.0.0.1 localhost" ;
+  echo "::1       localhost" ;
+  echo "127.0.0.1 lince.localdomain lince"
+} > /etc/hosts
+
+# ###########################
+# Basic software and services
+# ###########################
+
+pacman -S efibootmgr apparmor bash-completion man-db man-pages dialog logrotate mtools dosfstools
+pacman -S networkmanager bluez bluez-utils avahi inetutils dnsutils wireless_tools
+pacman -S alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber
+pacman -S openssh sshfs fuse3 rsync
+pacman -S nftables flatpak cups terminus-font haveged
+
+systemctl enable apparmor
+systemctl enable cups
+systemctl enable sshd
+systemctl enable avahi-daemon
+systemctl enable haveged
+systemctl enable logrotate.timer
+systemctl enable systemd-timesyncd
+systemctl enable NetworkManager
+systemctl enable bluetooth
+systemctl enable wpa_supplicant
+
+# Add user
+useradd -m -G wheel narcizo
+passwd narcizo
+visudo
+  %wheel ALL=(ALL) NOPASSWD: ALL
+
+
+# ###########
+# Boot loader
+# ###########
+
+# Install boot loader
+bootctl --path=/boot install
+vim /boot/loader/loader.conf
+   timeout      5
+   console-mode max
+   default      arch
+
+# The line below will write <part-uuid> into arch.conf
+blkid /dev/nvme0n1p2 | awk '{print $6}' > /boot/loader/entries/arch.conf
+blkid /dev/mapper/root | awk '{print $6}' >> /boot/loader/entries/arch.conf
+
+vim /boot/loader/entries/arch.conf
+   title   Arch Linux
+   linux   /vmlinuz-linux
+   initrd  /intel-ucode.img
+   initrd  /initramfs-linux.img
+   options cryptdevice=PARTUUID=<part-uuid-partition>:root root=PARTUUID=<part-uuid-mapper> rootflags=subvol=@ rw loglevel=3 quiet apparmor=1 lsm=lockdown,yama,apparmor
+
+# Create fall-back
+cp /boot/loader/entries/arch.conf /boot/loader/entries/arch-fallback.conf
+vim /boot/loader/entries/arch-fallback.conf
+   initdrd /initramfs-linux-fallback.img
+
+
+# ######
+# Reboot
+# ######
+
+exit
+umount -R /mnt
+poweroff
+
+# Remove installation media, boot and login as root
+
+# login to wifi
+#nmcli device wifi connect Sabbatini password <passwd>
+
+# Update system
+sudo pacman -Syu
+
+# Install yay
+mkdir /home/narcizo/builds; cd /narcizo/home/builds
+git clone https://aur.archlinux.org/yay.git
+cd yay; makepkg -si
+
+# Install timeshift and zramd
+yay -S timeshift timeshift-autosnap zramd
+
+sudo systemctl enable --now zramd.service
+sudo vim /etc/default/zramd
+
+# Install video drivers
+sudo pacman -S mesa intel-media-driver vulkan-intel
+
+# Install touchpad driver
+sudo pacman -S xf86-input-synaptics
+
+# ###############
+# Install desktop
+# ###############
+
+# Install gnome
+sudo pacman -S gnome gnome-tweaks dconf-editor
+yay -S chrome-gnome-shell
+sudo systemctl enable gdm
+sudo reboot
+
+# Install fonts and themes
+sudo pacman -S noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-roboto ttf-roboto-mono adobe-source-code-pro-fonts
+
+# Install Google chrome and warsaw
+yay google-chrome
+yay warsaw-bin
+sudo systemctl enable --now warsaw
+# Entre no site https://www.dieboldnixdorf.com.br/warsaw e configurar
+
+# Install printer
+# Configure the printer at http://127.0.0.1:631
+#    admin->add printer->ipp->ipp://192.168.1.244/ipp/port1, then choose ippEverywhere driver
+
+# Install scanner
+yay -S brscan4
+sudo brsaneconfig4 -a name=brscanner model=Brother_DCP_B7520DW ip=192.168.1.244
+brsaneconfig4 -q
+
+# Install snap
+yay -S snapd
+sudo systemctl enable --now snapd.socket
+sudo systemctl enable --now apparmor.service
+sudo systemctl enable --now snapd.apparmor.service
+sudo reboot
+sudo snap install snap-store
+
+# Install tlp
+sudo pacman -S tlp tlp-rdw powertop smartmontools x86_energy_perf_policy ethtool
+sudo systemctl enable --now tlp
+sudo systemctl mask systemd-rfkill.service
+sudo systemctl mask systemd-rfkill.socket
+sudo systemctl enable --now NetworkManager-dispatcher
+configure /etc/tlp.conf
+sudo tlp start
+sudo tlp-stat -s
+sudo powertop # check tunables
+
+# Generate ssh keys and mount sshfs disk on castor
+ssh-keygen -t rsa
+ssh-copy-id pi@canario
+# If not installed yet, install ssh server in castor, following this link:
+# https://medium.com/rkttu/set-up-your-ssh-server-in-windows-10-native-way-1aab9021c3a6
+scp /home/narcizo/.ssh/id_rsa.pub narcizo@castor:/C:/Users/Narcizo/.ssh
+# In castor, open powershell with admin elevation:
+   cd C:\Users\Narcizo\.ssh
+   rename id_rsa.pub authorized_keys
+   $authorizedKeyFilePath = "C:\Users\Narcizo\.ssh\authorized_keys"
+   icacls.exe $authorizedKeyFilePath /remove “NT AUTHORITY\Authenticated Users”
+   icacls.exe $authorizedKeyFilePath /inheritance:r
+   Get-Acl “$env:ProgramData\ssh\ssh_host_dsa_key” | Set-Acl $authorizedKeyFilePath
+mkdir /home/narcizo/castor
+vim /home/narcizo/.profile
+   # Mount sshfs disk on castor
+   REMOTE="narci@192.168.1.42:/G:/Users/Narcizo/"
+   LOCAL="/home/narcizo/castor"
+   MOUNTED=$( /usr/bin/mount | grep -E "^${REMOTE}" | /usr/bin/awk '{print $3}' )
+
+   if [ -z "$MOUNTED" ] ; then
+      /usr/bin/sshfs $REMOTE $LOCAL -o uid=1000,gid=1000,reconnect,ServerAliveInterval=15,ServerAliveCountMax=3
+   fi
+
+# Remove orphaned packages
+pacman -Rns $(pacman -Qtdq)
+
+# Install vim plugin manager: https://github.com/junegunn/vim-plug
+# Current .vimrc is configured to autoload the manager and use the gruvbox plugin
+# If you add another plugin, load it by running the following:
+vim
+   :PlugInstall
+
+# ##############################
+# Set backup timer using systemd
+# ##############################
+
+# Hourly backup
+
+vim ~/.config/systemd/user/hourly-backup.service
+   [Unit]
+   Description="Hourly backup of home directory"
+   [Service]
+   Type=oneshot
+   ExecStart=/home/narcizo/bin/hourly-backup.sh
+
+vim ~/.config/systemd/user/hourly-backup.timer
+   [Unit]
+   Description="Hourly backup of home directory"
+   [Timer]
+   Persistent=false
+   OnCalendar=*-*-* *:15:00
+   Unit=hourly-backup.service
+   [Install]
+   WantedBy=timers.target
+
+# Enable the timer
+sudo systemctl daemon-reload
+systemctl --user enable --now hourly-backup.timer
+
+# Daily backup
+
+vim ~/.config/systemd/user/hourly-backup.service
+   [Unit]
+   Description="Daily backup of home directory"
+   [Service]
+   Type=oneshot
+   ExecStart=/home/narcizo/bin/daily-backup.sh
+
+vim ~/.config/systemd/user/hourly-backup.timer
+   [Unit]
+   Description="Daily backup of home directory"
+   [Timer]
+   Persistent=true
+   OnCalendar=*-*-* 12:50:00
+   RandomizedDelaySec=300
+   Unit=daily-backup.service
+   [Install]
+   WantedBy=timers.target
+
+# Enable the timer
+sudo systemctl daemon-reload
+systemctl --user enable --now daily-backup.timer
+
+# ###################
+# Install mail server
+# ###################
+
+/home/narcizo/bin/install-postfix.sh
+echo "[smtp.gmail.com]:587 narcizo.sabbatini@gmail.com:pnrlyntqnmzgdhrr" | sudo tee /etc/postfix/sasl_passwd
+sudo chmod 600 /etc/postfix/sasl_passwd
+sudo postmap hash:/etc/postfix/sasl_passwd
+sudo chmod u=rw,go= /etc/postfix/sasl_passwd
+sudo chmod u=rw,go= /etc/postfix/sasl_passwd.db
+sudo systemctl restart postfix
+# Fix aliases in /etc/aliases
+sudo newaliases
+# Specify the email in both "crontab -e" and "sudo crontab -e"
+MAILTO=Narcizo.Sabbatini@gmail.com
+
+# #########################################
+# Undervolt the CPU and limit package power
+# #########################################
+
+sudo pacman -S intel-undervolt
+sudo intel-undervolt read
+sudo vim /etc/intel-undervolt.conf
+   undervolt 0 'CPU' -50
+   undervolt 1 'GPU' -50
+   undervolt 2 'CPU Cache' -50
+   power package 25 15
+   tjoffset -10
+sudo intel-undervolt apply
+sudo systemctl enable --now intel-undervolt.service
+
+# ################################
+# Install firmware update software
+# ################################
+sudo pacman -S fwupd gnome-firmware
+
+# #########################
+# Managing flatpak programs
+# #########################
+## List remote packages (store)
+#flatpak remotes
+## Search a remote package
+#flatpak search gimp
+## To install applications
+#flatpak install gimp
+## Running an application
+#flatpak run org.gimp.GIMP
+## Update all gapplications
+#flatpak update
+## List installed applications and runtimes
+#flatpak list
+## Alternatively, to just list installed applications
+#flatpak list --app
+## Remove an application
+#flatpak uninstall org.gimp.GIMP
+
+# Balena-etcher
+yay -S etcher-bin
+
+# LibreOffice
+sudo pacman -S libreoffice-fresh
+sudo pacman -S java-runtime java-environment pstoedit libmythes unixodbc coin-or-mp
+
+# http://mayccoll.github.io/Gogh/ - choose one or more color schemes for gnome-terminal, then run
+bash -c  "$(wget -qO- https://git.io/vQgMr)"
+
+# Powerline
+sudo pacman -S powerline powerline-vim
+yay -S powerline-fonts-git
+vim ~/.bashrc
+   powerline-daemon -q
+   POWERLINE_BASH_CONTINUATION=1
+   POWERLINE_BASH_SELECT=1
+   . /usr/share/powerline/bindings/bash/powerline.sh
+vim .vimrc
+   set laststatus=2
+
+# ##########
+# VirtualBox
+# ##########
+
+#sudo pacman -S virtualbox virtualbox-host-modules-arch
+#sudo modprobe vboxdrv
+#sudo usermod -aG vboxusers narcizo
+#yay -S virtualbox-ext-oracle
+##gsettings set org.gnome.mutter.wayland xwayland-grab-access-rules "['VirtualBox Machine']"
+## Open VirtualBox gui and create a VM: #CPUs: 2, Memory: 4G, Disk: 20G, enable EFI
+#vboxmanage setextradata "ArchLinux" CustomVideoMode1 "3840x2160x32"
+#vboxmanage controlvm "ArchLinux" setvideomodehint 3840 2160 32 # after starting vm
+
+# ########################
+# qemu/kvm virtual machine
+# ########################
+
+## Install libvert and qemu (gnome-boxes has them already installed)
+#sudo pacman -S --needed libvirt qemu dmidecode
+
+## Network connectivity (NAT/DHCP)
+#sudo pacman -S ebtables dnsmasq
+
+## Support for EFI
+#sudo pacman -S edk2-ovmf
+
+## Install clients (gnome-boxes is already installed)
+#sudo pacman -S virt-manager
+
+## Allow users in wheel group to manage libvirt
+#sudo vim /etc/polkit-1/rules.d/50-libvirtd.rules
+#   /* Allow users in kvm group to manage the libvirt
+#      daemon without authentication */
+#   polkit.addRule(function(action, subject) {
+#       if (action.id == "org.libvirt.unix.manage" &&
+#           subject.isInGroup("wheel")) {
+#               return polkit.Result.YES;
+#       }
+#   });
+
+## Add user to group libvirt
+#sudo usermod -a -G libvirt narcizo
+#sudo usermod -a -G kvm narcizo
+
+## Start daemons
+#sudo systemctl enable libvirtd.service
+
+## Reboot to apply groups and activate daemon
+#sudo reboot
+
+## Start network interface
+#virsh -c qemu:///system net-autostart default
+#virsh -c qemu:///system net-start default
+
+## Open virt-manager gui with in Gnome desktop or with the command
+## VM images are stored in /var/lib/libvirt/images
+#virt-manager&
+
+
+#########################
+# DT Instructions for dwm
+# #######################
+
+#sudo pacman -S <video-driver-for qemu> xorg xorg-xinit nitrogen picom firefox
+#yay -S dwm-distrotube-git st-distrotube-git dmenu-distrotube-git nerd-fonts-mononoki
+#cp /etc/X11/xinit/xinitrc /home/narcizo/.xinitrc
+#vim .xinitrc
+#   # delete last 5 lines
+#   nitrogen --restore &
+#   picom &
+#   exec dwm
+#sudo reboot
+#startx
+#xrandr
+#xrandr -s 3840x2160
+#git clone https://gitlab.com/dwt1/wallpapers.git
+#cd wallpapers
+#dmenu -> nitrogen -> preferences -> add -> wallpapers folder
+# reload dwm
+
+############################################################################
+# Configure qdisc with "cake"
+############################################################################
+
+vim /home/narcizo/bin/qdisc.sh
+   !/bin/bash
+   unset PATH
+   ################## Configure Quality of Service (QoS) ##################
+   # Remove prior configuration
+   /usr/bin/tc qdisc del dev wlp2s0 root 2> /dev/null
+   # Configure qdisc
+   /usr/bin/tc qdisc add dev wlp2s0 handle 1: root cake
+
+vim /etc/systemd/systemd/qdisc.service
+   [Unit]
+   Description=Configure qdisc on wifi interface
+   After=network.target
+   [Service]
+   Type=oneshot
+   ExecStart=/usr/bin/bash /home/narcizo/bin/qdisc.sh
+   [Install]
+   WantedBy=multi-user.target
+
+systemctl daemon-reload
+systemctl enable qdisc.service
