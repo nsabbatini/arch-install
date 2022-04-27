@@ -56,7 +56,7 @@ mount /dev/nvme0n1p1 /mnt/boot/
 # Generate a file system table file
 mkdir /mnt/etc
 genfstab -U -p /mnt >> /mnt/etc/fstab
-echo '/swapfile none swap defaults 0 0' | tee -a /etc/fstab
+echo '/swapfile none swap defaults 0 0' | tee -a /mnt/etc/fstab
 
 
 # ############################################
@@ -73,7 +73,7 @@ arch-chroot /mnt
 passwd
 
 # Download arch-install from github
-git clone git@github.com:nsabbatini/arch-install.git
+git clone https://github.com/nsabbatini/arch-install.git
 
 # ##########################################
 # The following script does the following:
@@ -111,7 +111,6 @@ cd yay; makepkg -si
 # Install desktop software
 yay -S google-chrome chrome-gnome-shell warsaw-bin
 sudo systemctl enable warsaw
-# Configure warsaw in https://www.dieboldnixdorf.com.br/warsaw
 
 # gnome-terminal themes
 # http://mayccoll.github.io/Gogh/ - choose one or more color schemes for gnome-terminal, then run
@@ -124,7 +123,6 @@ brsaneconfig4 -q
 
 # LibreOffice
 sudo pacman -S libreoffice-fresh
-sudo pacman -S java-runtime java-environment pstoedit libmythes unixodbc coin-or-mp
 
 # Balena-etcher
 yay -S etcher-bin
@@ -192,7 +190,7 @@ vim ~/.config/systemd/user/hourly-backup.timer
    WantedBy=timers.target
 
 # Enable the timer
-sudo systemctl daemon-reload
+systemctl --user daemon-reload
 systemctl --user enable --now hourly-backup.timer
 
 # Daily backup

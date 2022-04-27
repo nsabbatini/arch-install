@@ -12,4 +12,5 @@ systemctl enable wpa_supplicant
 systemctl enable bluetooth
 systemctl enable systemd-boot-update
 systemctl enable systemd-timesyncd
+systemctl enable gdm
 echo "systemd services enabled"
