@@ -44,13 +44,19 @@ mkfs.ext4 /dev/nvme0n1p2
 # Mount the root partition under /mnt
 mount /dev/nvme0n1p2 /mnt
 
+# Create swap file
+dd if=/dev/zero of=/mnt/swapfile bs=1M count=2048 status=progress
+chmod 600 /mnt/swapfile
+mkswap /mnt/swapfile
+
 # Make a boot directory and mount the efi partition
 mkdir /mnt/boot
 mount /dev/nvme0n1p1 /mnt/boot/
-mkdir /mnt/etc
 
 # Generate a file system table file
+mkdir /mnt/etc
 genfstab -U -p /mnt >> /mnt/etc/fstab
+echo '/swapfile none swap defaults 0 0' | tee -a /etc/fstab
 
 
 # ############################################
@@ -102,25 +108,14 @@ mkdir /home/narcizo/builds; cd /narcizo/home/builds
 git clone https://aur.archlinux.org/yay.git
 cd yay; makepkg -si
 
-# ###############
-# Install desktop
-# ###############
-
-# Install gnome
-sudo pacman -S gnome gnome-tweaks dconf-editor
-sudo pacman -S noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-roboto ttf-roboto-mono adobe-source-code-pro-fonts
+# Install desktop software
 yay -S google-chrome chrome-gnome-shell warsaw-bin
-sudo systemctl enable gdm
 sudo systemctl enable warsaw
 # Configure warsaw in https://www.dieboldnixdorf.com.br/warsaw
 
-sudo reboot
-
-# Install fonts
 # gnome-terminal themes
 # http://mayccoll.github.io/Gogh/ - choose one or more color schemes for gnome-terminal, then run
 bash -c  "$(wget -qO- https://git.io/vQgMr)"
-
 
 # Install printter and scanner drivers; configure printer at http://127.0.0.1:631
 yay -S brother-dcp-b7520dw brscan4
