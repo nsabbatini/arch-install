@@ -1,5 +1,8 @@
 #!bin/bash
 
+cp /etc/bluetooth/main.conf /etc/bluetooth/main-conf-orig
+rsync -v -r /arch-install/root/ /
+
 systemctl enable apparmor
 systemctl enable cups
 systemctl enable sshd

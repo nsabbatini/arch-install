@@ -1,7 +1,7 @@
 #!bin/bash
 
 echo "initating pakage download"
-pacman -S efibootmgr apparmor bash-completion man-db man-pages dialog logrotate mtools dosfstools
+pacman -S efibootmgr apparmor bash-completion man-db man-pages dialog logrotate mtools dosfstools reflector
 pacman -S networkmanager bluez bluez-utils avahi inetutils dnsutils wireless_tools
 pacman -S openssh sshfs fuse3 rsync curl wget
 pacman -S pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber

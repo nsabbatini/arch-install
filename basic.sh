@@ -35,7 +35,7 @@ echo "/etc/hosts created"
 # ###########################
 
 echo "initating pakage download"
-pacman -S efibootmgr apparmor bash-completion man-db man-pages dialog logrotate mtools dosfstools
+pacman -S efibootmgr apparmor bash-completion man-db man-pages dialog logrotate mtools dosfstools reflector
 pacman -S networkmanager bluez bluez-utils avahi inetutils dnsutils wireless_tools
 pacman -S openssh sshfs fuse3 rsync curl wget
 pacman -S pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber
@@ -46,7 +46,12 @@ sudo pacman -S gnome gnome-tweaks dconf-editor
 sudo pacman -S noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra ttf-roboto ttf-roboto-mono adobe-source-sans-fonts adobe-source-code-pro-fonts
 echo "finished package download"
 
+# Copy configuration files
+cp /etc/bluetooth/main.conf /etc/bluetooth/main-conf-orig
+rsync -v -r /arch-install/root/ /
+
 # Enable basic services
+systemctl enable nftables
 systemctl enable apparmor
 systemctl enable cups
 systemctl enable sshd
@@ -60,6 +65,7 @@ systemctl enable bluetooth
 systemctl enable systemd-boot-update
 systemctl enable systemd-timesyncd
 systemctl enable gdm
+systemctl enable reflector
 echo "systemd services enabled"
 
 # ###########

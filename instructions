@@ -359,3 +359,14 @@ sudo pacman -S fwupd gnome-firmware
 ## Open virt-manager gui with in Gnome desktop or with the command
 ## VM images are stored in /var/lib/libvirt/images
 #virt-manager&
+
+
+# Install tilix
+sudo pacman -S tilix python-nautilus gtksourceview3
+cat << EOF >> .bashrc
+
+# Support for tilix terminal emulator
+if [ $TILIX_ID ] || [ $VTE_VERSION ]; then
+        source /etc/profile.d/vte.sh
+fi
+EOF
