@@ -18,6 +18,7 @@
 pkg_list="/root/arch-plasma/bin/pkg.txt"
 #pkg_list_extra="/root/arch-plasma/bin/pkg_list_laptop.txt"
 #pkg_list_extra="/root/arch-plasma/bin/pkg_list_desktop.txt"
+#pkg_list_extra="/root/arch-plasma/bin/pkg_list_vm.txt"
 
 # GPU type
 #gpu="intel"

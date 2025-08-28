@@ -1,0 +1,13 @@
+# On the first arch linux install on a new hardware, uncomment the following line to
+# install all firmware packages, then find out which firmware packages need to be installed
+linux-firmware
+
+# Firmware packages
+#linux-firmware-intel
+#linux-firmware-realtek
+
+# Spice guest tools
+spice-vdagent
+
+# virtio drivers
+vulkan-virtio
