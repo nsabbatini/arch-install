@@ -1,0 +1,45 @@
+# On the first arch linux install on a new hardware, uncomment the following line to
+# install all firmware packages, then find out which firmware packages need to be installed
+#linux-firmware
+
+# Firmware packages
+linux-firmware-intel
+
+# Nvidia drivers
+dkms
+nvidia-open-dkms
+nvidia-utils
+nvidia-settings
+opencl-nvidia
+lib32-nvidia-utils
+lib32-opencl-nvidia
+nvtop
+
+# Steam
+steam
+ttf-liberation
+lib32-systemd
+
+# Lutris
+lutris
+fluidsynth
+gamemode
+gvfs
+innoextract
+libayatana-appindicator
+lib32-gamemode
+lib32-gnutls
+lib32-mesa-libgl
+lib32-vkd3d
+lib32-vulkan-icd-loader
+python-pefile
+python-protobuf
+vkd3d
+vulkan-icd-loader
+vulkan-tools
+wine
+wine-mono
+winetricks
+xorg-xgamma
+
+# Install Heroic Launcher flatpack version using KDE Discover

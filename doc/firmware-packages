@@ -1,0 +1,19 @@
+# On the first arch linux install on a new hardware, uncomment the following line on pkg_list.txt:
+linux-firmware
+#This will install all firmware packages
+
+# After the system is up and running, we can uninstall linux-firmare and install just the packages
+# required for our hardware. To find out which firmware packages are actually used on the system,
+# edit /boot/loader/entrie/arch.conf and add the following kernel parameter to the "options" line:
+dyndbg="func fw_log_firmware_info +p"
+# Then reboot and run
+journalctl -b | sed -n 's;.*Loaded FW: \(.*\),.*;/usr/lib/firmware/\1.zst;p' | xargs pacman -Qoq | sort -u
+# to get a list of all linux-firmware-* packages of which files are being used.
+
+# Then uninstall linux-firmware and also uninstall all linux-firmware-xxx packages which are not used.
+# For example, for the Dell XPS 13 7390, only linux-firmware-intel and linux-firmware-realtek are required.
+# Also, linux-firware-whence ia a required dependency.
+sudo pacman -Rdd linux-firmware
+sudo pacman -Rns linux-firmware-amdgpu linux-firmware-atheros linux-firmware-broadcom linux-firmware-cirrus linux-firmware-mediatek linux-firmware-nvidia linux-firmware-other linux-firmware-radeon
+
+# When all this is done, we can remove the kernel parameter that was added.
