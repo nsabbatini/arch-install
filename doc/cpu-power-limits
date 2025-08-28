@@ -1,0 +1,24 @@
+Intel processors have power limits, which set the amount of power the CPU
+can draw, which in turn affect clock speeds and performance. These limits
+are typically set in the BIOS, but we can also set them as linux system
+parameters (sysfs). The two main power limits are:
+   * PL1: long duration power limit, often set to the processor's TDP,
+          and is the maximum sustained power the CPU can draw.
+   * PL2: short duration power limit, usually higher than PL1, allowing
+          the CPU to briefly draw more power for performance bursts.
+
+The above limits can be set in the following files, which are part of the
+RAPL (Intel Running Average Power Limit), part of the Power Cap Framework:
+   * /sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw, to set PL1
+   * /sys/class/powercap/intel-rapl:0/constraint_1_power_limit_uw, to set PL2
+   * /sys/class/powercap/intel-rapl:0/enabled, to enable RAPL
+
+The above files are temporary (sysfs kernel interface) and must be written on
+every boot. To to that we use the systemd-tmpfiles service, which can be used
+to create of modify temporary files at boot. We configure systemd-tmpfiles by
+creating a file in /etc/tmpfiles.d. For example, for PL1=120W and PL2=210W,
+we create a file called energy_performance_preference.conf with the following:
+
+w /sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw - - - - 120000000
+w /sys/class/powercap/intel-rapl:0/constraint_1_power_limit_uw - - - - 210000000
+w /sys/class/powercap/intel-rapl:0/enabled - - - - 1

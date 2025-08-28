@@ -11,6 +11,8 @@ source /root/arch-plasma/bin/parameters.sh
 echo "Checking config parameters..."
 [[ -z "$disk" ]] && { echo "Error: variable disk undefined"; exit 1; }
 [[ -z "$host" ]] && { echo "Error: variable host undefined"; exit 1; }
+[[ -z "$PL1" ]] && { echo "Error: variable PL1 undefined"; exit 1; }
+[[ -z "$PL2" ]] && { echo "Error: variable PL2 undefined"; exit 1; }
 [[ -z "$pkg_list" ]] && { echo "Error: variable pkg_list undefined"; exit 1; }
 [[ -z "$pkg_list_extra" ]] && { echo "Error: variable pkg_list_extra undefined"; exit 1; }
 [[ -z "$multilib" ]] && { echo "Error: variable multilib undefined"; exit 1; }
@@ -149,6 +151,15 @@ echo "Done"
 
 echo "Copying install data to run under chroot..."
 cp -r /root/arch-plasma /mnt/root/
+echo "Done"
+
+echo "Configuring CPU power limits..."
+[[ -d /mnt/etc/tmpfiles.d ]] || { mkdir -p /mnt/etc/tmpfiles.d; }
+cat << EOF > /mnt/etc/tmpfiles.d/energy_performance_preference.conf
+w /sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw - - - - $PL1
+w /sys/class/powercap/intel-rapl:0/constraint_1_power_limit_uw - - - - $PL2
+w /sys/class/powercap/intel-rapl:0/enabled - - - - 1
+EOF
 echo "Done"
 
 echo "Invoking install script to be run under chroot..."

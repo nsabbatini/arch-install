@@ -23,6 +23,14 @@ pkg_list="/root/arch-plasma/bin/pkg.txt"
 #gpu="intel"
 #gpu="nvidia"
 
+# Power limits
+# This is for i9-9900K (castor)
+#PL1=120000000
+#PL2=210000000
+# This is for i7-10710U (lince)
+#PL1=15000000
+#PL2=45000000
+
 # Multilib (32-bit libraries)
 #multilib="enabled"
 #multilib="disabled"
