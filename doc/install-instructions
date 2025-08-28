@@ -265,7 +265,8 @@ sudo snapper list-configs
 sudo snapper -c root set-config ALLOW_USERS="$USER" SYNC_ACL=yes
 snapper ls
 ls -l /.snapshots/
-sudo systemctl status snapper-timeline.timer snapper-cleanup.timer
+sudo systemctl enable --now snapper-timeline.timer
+sudo systemctl enable --now snapper-cleanup.timer
 
 # Enable overlayfs
 sudo vim /etc/mkinitcpio.conf
