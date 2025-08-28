@@ -8,6 +8,3 @@ linux-firmware
 
 # Spice guest tools
 spice-vdagent
-
-# virtio drivers
-vulkan-virtio

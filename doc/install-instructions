@@ -25,12 +25,13 @@ timedatectl set-timezone America/Sao_Paulo
 passwd
 
 # Make sure keyring is updated
+pacman -Sy
 pacman -S --needed archlinux-keyring
 
 # Make an ssh connection from another linux machine and copy (with scp) the install
 # scripts; or else clone from github
 pacman -S git
-git clone https://github.com/nsabbatini/arch-plasma.git
+git clone https://github.com/nsabbatini/arch-install.git
 
 ######### DON'T FORGET TO MODIFY THE PARAMETERS FILE ##########
 # Configure install parameters in file /root/router/bin/parameters.sh and run install script
