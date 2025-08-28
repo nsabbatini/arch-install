@@ -6,11 +6,12 @@ echo "######################"
 echo ""
 
 # Before running this script, define parameters in file parameters.sh
-source /root/arch-plasma/bin/parameters.sh
+source /root/arch-install/bin/parameters.sh
 
 echo "Checking config parameters..."
 [[ -z "$disk" ]] && { echo "Error: variable disk undefined"; exit 1; }
 [[ -z "$host" ]] && { echo "Error: variable host undefined"; exit 1; }
+[[ -z "$gpu" ]] && { echo "Error: variable gpu undefined"; exit 1; }
 [[ -z "$PL1" ]] && { echo "Error: variable PL1 undefined"; exit 1; }
 [[ -z "$PL2" ]] && { echo "Error: variable PL2 undefined"; exit 1; }
 [[ -z "$pkg_list" ]] && { echo "Error: variable pkg_list undefined"; exit 1; }
@@ -99,8 +100,7 @@ if [[ "$multlib" == "enabled" ]]; then
 fi
 
 echo "Downloading packages..."
-pkgs="$pkg_list $pkg_list_extra"
-cat $pkgs | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacstrap -i --needed /mnt -
+cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacstrap -i --needed /mnt -
 echo "Done"
 
 echo "Creating /etc/fstab..."
@@ -108,7 +108,7 @@ genfstab -U -p /mnt >> /mnt/etc/fstab
 echo "Done"
 
 echo "Copying configuration files..."
-rsync -v -r /root/arch-plasma/etc/ /mnt/etc/
+rsync -v -r /root/arch-install/etc/ /mnt/etc/
 echo "Done"
 
 echo "Configuring hostname, language, keymap..."
@@ -149,10 +149,6 @@ echo "Configuring smartctl..."
 echo "$disk -a -o on -S on -s (S/../.././02|L/../../6/03)" > /mnt/etc/smartd.conf
 echo "Done"
 
-echo "Copying install data to run under chroot..."
-cp -r /root/arch-plasma /mnt/root/
-echo "Done"
-
 echo "Configuring CPU power limits..."
 [[ -d /mnt/etc/tmpfiles.d ]] || { mkdir -p /mnt/etc/tmpfiles.d; }
 cat << EOF > /mnt/etc/tmpfiles.d/energy_performance_preference.conf
@@ -162,8 +158,12 @@ w /sys/class/powercap/intel-rapl:0/enabled - - - - 1
 EOF
 echo "Done"
 
+echo "Copying install data to run under chroot..."
+cp -r /root/arch-install /mnt/root/
+echo "Done"
+
 echo "Invoking install script to be run under chroot..."
-arch-chroot /mnt bash -c "/root/arch-plasma/bin/arch-chroot.sh > >(tee -a /root/arch-chroot.stdout.log) 2> >(tee -a /root/arch-chroot.stderr.log >&2)"
+arch-chroot /mnt bash -c "/root/arch-install/bin/arch-chroot.sh > >(tee -a /root/arch-chroot.stdout.log) 2> >(tee -a /root/arch-chroot.stderr.log >&2)"
 echo "Done"
 
 echo ""

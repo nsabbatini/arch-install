@@ -6,7 +6,7 @@ echo "############################"
 echo ""
 
 # Before running this script, adjust parameters in file "parameters.sh"
-source /root/arch-plasma/bin/parameters.sh
+source /root/arch-install/bin/parameters.sh
 [[ -z "$user" ]] && { echo "Error: variable user undefined"; exit 1; }
 [[ -z "$gpu" ]] && { echo "Error: variable gpu undefined"; exit 1; }
 [[ -z "$multilib" ]] && { echo "Error: variable multilib undefined"; exit 1; }
@@ -22,8 +22,8 @@ echo "Installing boot loader..."
 grub-install --target=x86_64-efi --efi-directory=/efi --boot-directory=/boot --bootloader-id=arch
 grub-mkconfig -o /boot/grub/grub.cfg
 
-sed -Ei 's/^(.*LINUX_DEFAULT=)""$/\1"rw quiet loglevel=3 lsm=landlock,lockdown,yama,integrity,apparmor,bpf zswap.enabled=1"' /etc/default/grub
-update-grub
+sed -Ei 's/^(.*CMDLINE_LINUX=)""/\1"lsm=landlock,lockdown,yama,integrity,apparmor,bpf zswap.enabled=1"/' /etc/default/grub
+grub-mkconfig -o /boot/grub/grub.cfg
 
 echo "Bootloader done"
 
@@ -53,8 +53,8 @@ mkdir -p /mnt/backup
 echo "Disk mounts done"
 
 # Configure systemd-resolved
-rm /etc/resolv.conf
-ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+#rm /etc/resolv.conf
+#ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
 echo "Enabling systemd services..."
 systemctl enable nftables

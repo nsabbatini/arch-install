@@ -49,7 +49,9 @@ poweroff
 # Power-on, login as normal user, then retrive home directory backup from /mnt/backup
 # ###################################################################################
 
-# Make sure that /etc/resolv.conf is a link to /run/systemd/resolve/stub-resolv.conf
+rm /etc/resolv.conf
+ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
 # Edit /etc/systemd/resolved.conf, uncomment and change the following line:
     MulticastDNS=no
 # Enable mdns hostname resolution with avahi. Edit /etc/nsswitch.conf

@@ -15,10 +15,10 @@
 #host="castor"
 
 # Packages list
-pkg_list="/root/arch-plasma/bin/pkg.txt"
-#pkg_list_extra="/root/arch-plasma/bin/pkg_list_laptop.txt"
-#pkg_list_extra="/root/arch-plasma/bin/pkg_list_desktop.txt"
-#pkg_list_extra="/root/arch-plasma/bin/pkg_list_vm.txt"
+pkg_list="/root/arch-install/bin/pkg_list.txt"
+#pkg_list_extra="/root/arch-install/bin/pkg_list_laptop.txt"
+#pkg_list_extra="/root/arch-install/bin/pkg_list_desktop.txt"
+#pkg_list_extra="/root/arch-install/bin/pkg_list_vm.txt"
 
 # GPU type
 #gpu="intel"
