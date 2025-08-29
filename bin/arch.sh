@@ -125,6 +125,15 @@ cat << EOF > /mnt/etc/hosts
 EOF
 echo "Done"
 
+echo "Enabling avahi to handle mdns instead of systemd-resolved..."
+sed -Ei 's/^(hosts.*) (resolve.*)$/\1 mdns4_minimal [NOTFOUND=return] \2/g' /mnt/etc/nsswitch.conf
+[[ -d /mnt/etc/systemd/resolved.conf.d ]] || { mkdir -p /mnt/etc/systemd/resolved.conf.d; }
+cat << EOF > /mnt/etc/systemd/resolved.conf.d/mdns.conf
+[Resolve]
+MulticastDNS=no
+EOF
+echo "Done"
+
 # Environment variables to force Nvidia GBM (Generic Buffer Management)
 # See https://linuxiac.com/nvidia-with-wayland-on-arch-setup-guide/
 write_nvidia_config_files() {

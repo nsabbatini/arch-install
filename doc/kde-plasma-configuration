@@ -1,0 +1,90 @@
+############################
+# Themes, widgets and fonts
+############################
+
+# Go to Plasma desktop -> System Settings -> Colors & Themes -> Colors
+# Install "Catppuccin Frappe Flamingo" color scheme and use it together with "breeze dark"
+
+# RMB click on panel, click "Show Panel Configuration" then set:
+#    Position: Top
+#    Alignment: Center
+#    Width: Full width
+#    Visibility: Always visible
+#    Opacity: Adaptive
+#    Style: turn-off floating
+#    Panel Height: 32
+#    Focus shortcut: None 
+# Add/arrange the widgets:
+#    Keep Application Launcher
+#    Remove Task Manager
+#    Add Global Menu
+#    Panel Spacer
+#    Add (or move) Pager after the spacer (keep it at center)
+#    Panel Spacer
+#    Add Command Output (if using wifi on laptop, see config below)
+#    Margin Separator
+#    Keep System Tray
+# Exit edit mode
+
+# If using "Command Output" widget, configure it to use scripts in ~/bin/network-status.sh
+# (for command) and ~/bin/network-hover.sh (for tooltip action).
+
+# If using systemd-networkd with iwd, there is no widget on the system tray to connecto to wifi.
+# Instead, use iwctl (iwctl --help) or impala. There is also a helpful alias in .bashrc
+# (get it from backup) called "wifi".
+
+# RMB click on empty desktop with RMB, click "Enter Edit Mode" -> "Add Panel" -> "Empty Panel".
+# RMP click on panel, click "Add or Manage Widgets", Add "Icons-Only Task Manager", then exit.
+# Add applications to the new task manager on new panel:
+#    System Settings
+#    Discover
+#    Konsole
+#    Google Chrome
+#    BitWarden
+#    digiKam
+#    Virtual Machine Manager
+#    Spotify
+#    Firefox
+# RMB click on new panel, click "Show Panel Configuration" then set:
+#    Position: Bottom
+#    Alignment: Center
+#    Width: Fit content
+#    Visibility: Dodge windows
+#    Opacity: Adaptive
+#    Style: turn-on floating
+#    Panel Height: 60
+#    Focus shortcut: None
+# Exit edit mode
+
+# It is also possible to export KDE configuration in one machine and import in another.
+# In the source machine:
+konsave -s <profile-name>
+konsave -e <export-name> -d <export_directory>
+# In the receiving machine:
+konsave -i </path/to/export-name>
+
+################
+# Configure SDDM
+################
+
+# The config files already configure SDDM to use wayland, but to use the plasma theme do:
+# go to Plasma desktop -> Colors & Themes > Login Screen (SDDM), choose SDDM there and
+# click "Apply Plasma Settings..."
+
+##################################
+# Support for Logitech peripherals
+##################################
+
+# solaar should already be installed; open System Settings -> Autostart -> Add New -> solaar
+# Click solaar properties button -> application tab, then set the following arguments:
+# -w hide --restart-on-wake-up
+
+#######################
+# Enable steam autoload
+#######################
+
+# Open System Settings -> Autostart -> Add New -> Steam Runtime
+# Click Steam properties button -> application tab, then set the following arguments:
+# %U -silent
+
+

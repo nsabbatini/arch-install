@@ -25,6 +25,9 @@ grub-mkconfig -o /boot/grub/grub.cfg
 sed -Ei 's/^(.*CMDLINE_LINUX=)""/\1"lsm=landlock,lockdown,yama,integrity,apparmor,bpf zswap.enabled=1"/' /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
+sed -Ei 's/^(HOOKS.*)\)/\1 grub-btrfs-overlayfs)/g' /mnt/etc/mkinitcpio.conf
+sudo mkinitcpio -P
+
 echo "Bootloader done"
 
 if [[ "$multlib" == "enabled" ]]; then
@@ -56,6 +59,12 @@ echo "Disk mounts done"
 #rm /etc/resolv.conf
 #ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
+echo "Configuring btrfs and snapper"
+btrf filesystem label / ARCH
+snapper -c root create-config /
+snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
+echo "Done"
+
 echo "Enabling systemd services..."
 systemctl enable nftables
 systemctl enable cups
@@ -80,6 +89,9 @@ systemctl enable media-Music.automount
 systemctl enable media-Pictures.automount
 systemctl enable media-Videos.automount
 systemctl enable mnt-backup.automount
+systemctl enable snapper-timeline.timer
+systemctl enable snapper-cleanup.timer
+systemctl enable grub-btrfsd.service
 if [[ $gpu == "nvidia" ]]; then
    sudo systemctl enable nvidia-suspend.service
    sudo systemctl enable nvidia-hibernate.service

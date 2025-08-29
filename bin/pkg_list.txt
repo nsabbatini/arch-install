@@ -10,6 +10,9 @@ apparmor
 
 # btrfs
 btrfs-progs
+snapper
+snap-pac
+grub-btrfs
 
 # Shell
 bash-completion

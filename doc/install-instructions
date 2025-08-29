@@ -1,11 +1,8 @@
 # #######################################################################################
 # Basic preparations
-#   3. connect ethernet cable (use an usb ethernet adaptor if necessary)
-#   4. attach usb with Arch Linux install media and boot from it
+#   1. connect ethernet cable
+#   2. attach usb with Arch Linux install media and boot from it
 # #######################################################################################
-
-# If the fonts are too small
-setfont iso01-12x22.psfu.gz
 
 # If keyboard layout is not 'us'
 localectl list-keymaps | grep br
@@ -49,38 +46,70 @@ poweroff
 # Power-on, login as normal user, then retrive home directory backup from /mnt/backup
 # ###################################################################################
 
+# Fix systemd-resolved
 rm /etc/resolv.conf
 ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
-
-# Edit /etc/systemd/resolved.conf, uncomment and change the following line:
-    MulticastDNS=no
-# Enable mdns hostname resolution with avahi. Edit /etc/nsswitch.conf
-    hosts: mymachines mdns4_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns
-
-# Create file with NAS credentials (QNAP login on elefante.localdomain)
-vim ~/.cifs_creds
-   username=<user>
-   password=<passwd>
-
-# Recover backup from /mnt/backup (from NAS)
-
-# If not able to recover backup, Create ssh keys and export it to other machines
-ssh-keygen -t rsa
-ssh-copy-id <other_server>
-
+ 
 # Install yay
 mkdir /home/$USER/aur; cd /home/$USER/aur
 git clone https://aur.archlinux.org/yay-bin.git
 cd yay-bin; makepkg -si
 
 # Install AUR software
-yay -S google-chrome spotify etcher-bin yubico-authenticator-bin downgrade konsave
+yay -S google-chrome spotify etcher-bin yubico-authenticator-bin downgrade konsave otf-ibm-plex btrfs-assistant
 sudo systemctl enable --now pcscd.socket
 
-# The following will allow passwordless sudo using Yubico key
+# Create file with NAS credentials (QNAP login on elefante.localdomain)
+vim ~/.cifs_creds
+   username=<user>
+   password=<passwd>
+
+# Restore backup
+user=$USER
+host=$(hostname)
+src_dir="/mnt/backup/$host.localdomain/daily.0/$user"
+dst_dir="/home/$user"
+rsync -av $src_dir/ $dst_dir/
+
+
+##################################################################################
+# If not able to recover backup, the following can be recreated
+##################################################################################
+
+# Create ssh keys and export it to other machines
+ssh-keygen -t rsa
+ssh-copy-id <other_server>
+
+# Create Yubico keys
 sudo pacman -S pam-u2f
 mkdir ~/.config/Yubico
 pamu2fcfg > ~/.config/Yubico/u2f_keys
+
+# Config files to make applications use wayland
+cat << EOF > /home/$user/.config/chrome-flags.conf
+--enable-features=UseOzonePlatform
+--ozone-platform=wayland
+EOF
+
+cat << EOF > /home/$user/.config/electron-flags.conf
+--enable-features=WaylandWindowDecorations
+--ozone-platform-hint=auto
+EOF
+
+cat << EOF > /home/$user/.config/spotify-flags.conf
+--enable-features=WaylandWindowDecorations
+--ozone-platform-hint=auto
+EOF
+
+# All KDE Plasma configurations should be restored from backup. If not, instructions
+# are provided in a separate file (
+
+##################################################################################
+# End of restore instructions
+##################################################################################
+
+
+# The following will allow passwordless sudo using Yubico key
 sudo vim /etc/pam.d/sudo
 # Add before the other entries:
    auth sufficient pam_u2f.so cue [cue_prompt=Tap YubiKey]
@@ -117,167 +146,21 @@ sudo usermod -a -G brscan-skey <user>
 
 
 ###################################################
-# The following is to make applications use wayland
+# Miscellaneous
 ###################################################
-
-# Replace username
-user=<username>
-
-cat << EOF > /home/$user/.config/chrome-flags.conf
---enable-features=UseOzonePlatform
---ozone-platform=wayland
-EOF
-
-cat << EOF > /home/$user/.config/electron-flags.conf
---enable-features=WaylandWindowDecorations
---ozone-platform-hint=auto
-EOF
-
-cat << EOF > /home/$user/.config/spotify-flags.conf
---enable-features=WaylandWindowDecorations
---ozone-platform-hint=auto
-EOF
-
-############################
-# Themes, widgets and fonts
-############################
-
-# Install otf version of IMB Plex fonts then fo to Plasma desktop -> Text & Fonts
-# and choose IBM Plex Sans with the appropriate sizes for the monitor
-yay -S otf-ibm-plex
-
-# Go to Plasma desktop -> System Settings -> Colors & Themes -> Colors
-# Install "Catppuccin Frappe Flamingo" color scheme and use it together with "breeze dark"
-
-# RMB click on panel, click "Show Panel Configuration" then set:
-#    Position: Top
-#    Alignment: Center
-#    Width: Full width
-#    Visibility: Always visible
-#    Opacity: Adaptive
-#    Style: turn-off floating
-#    Panel Height: 32
-#    Focus shortcut: None 
-# Add/arrange the widgets:
-#    Keep Application Launcher
-#    Remove Task Manager
-#    Add Global Menu
-#    Panel Spacer
-#    Add (or move) Pager after the spacer (keep it at center)
-#    Panel Spacer
-#    Add Command Output (if using wifi on laptop, see config below)
-#    Margin Separator
-#    Keep System Tray
-# Exit edit mode
-
-# If using "Command Output" widget, configure it to use scripts in ~/bin/network-status.sh
-# (for command) and ~/bin/network-hover.sh (for tooltip action).
-
-# If using systemd-networkd with iwd, there is no widget on the system tray to connecto to wifi.
-# Instead, use iwctl (iwctl --help) or impala. There is also a helpful alias in .bashrc
-# (get it from backup) called "wifi".
-
-# RMB click on empty desktop with RMB, click "Enter Edit Mode" -> "Add Panel" -> "Empty Panel".
-# RMP click on panel, click "Add or Manage Widgets", Add "Icons-Only Task Manager", then exit.
-# Add applications to the new task manager on new panel:
-#    System Settings
-#    Discover
-#    Konsole
-#    Google Chrome
-#    BitWarden
-#    digiKam
-#    Virtual Machine Manager
-#    Spotify
-#    Firefox
-# RMB click on new panel, click "Show Panel Configuration" then set:
-#    Position: Bottom
-#    Alignment: Center
-#    Width: Fit content
-#    Visibility: Dodge windows
-#    Opacity: Adaptive
-#    Style: turn-on floating
-#    Panel Height: 60
-#    Focus shortcut: None 
-# Exit edit mode
-
-# It is also possible to export KDE configuration in one machine and import in another.
-# In the source machine:
-konsave -s <profile-name>
-konsave -e <export-name> -d <export_directory>
-# In the receiving machine:
-konsave -i </path/to/export-name>
-
-################
-# Configure SDDM
-################
-
-# The config files already configure SDDM to use wayland, but to use the plasma theme do:
-# go to Plasma desktop -> Colors & Themes > Login Screen (SDDM), choose SDDM there and
-# click "Apply Plasma Settings..."
-
-##################################
-# Support for Logitech peripherals
-##################################
-
-# solaar should already be installed; open System Settings -> Autostart -> Add New -> solaar
-# Click solaar properties button -> application tab, then set the following arguments:
-# -w hide --restart-on-wake-up
-
-###############################
-# Support for Razer peripherals
-###############################
-
-#sudo pacman -S openrazer-daemon
-#sudo usermod -a -G plugdev <user>
-# Reboot before prodeeding
-#systemctl --user enable --now openrazer-daemon.service
-# Install RazerGenie via flatpak (aur gave me problems, use discover on KDE-Plasma)
-# Note: the razer software is giving problems, avoid it.
-
-#######################
-# Enable steam autoload
-#######################
-
-# Open System Settings -> Autostart -> Add New -> Steam Runtime
-# Click Steam properties button -> application tab, then set the following arguments:
-# %U -silent
-
-
-#######################
-# btrfs, snapper
-#######################
 
 # View partitions and subvolumes
 lsblk -pf /dev/nvme0n1
 sudo btrfs subvolume list /
 
-# Set btfs filesystem label
-sudo btrf filesystem label / ARCH
+# View filesystem
 sudo btrf filesystem show /
-
-# View filesystem space allocation and usage
 sudo btrfs filesystem usage /
 
-# Install and configure snapper
-yay -S snapper snapper-pac grub-btrfs btrfs-assistant
-sudo snapper -c root create-config /
+# View snapper configs
 sudo snapper list-configs
-sudo snapper -c root set-config ALLOW_USERS="$USER" SYNC_ACL=yes
 snapper ls
 ls -l /.snapshots/
-sudo systemctl enable --now snapper-timeline.timer
-sudo systemctl enable --now snapper-cleanup.timer
-
-# Enable overlayfs
-sudo vim /etc/mkinitcpio.conf
-   HOOKS=(.... fsck grub-btrfs-overlayfs)
-sudo mkinitcpio -P
-sudo systemctl enable --now grub-btrfsd.service
-
-
-###################################################
-# Miscellaneous
-###################################################
 
 # The following is a workaroud for a KDE Plasma bug, which disables bluetooth after login.
 # Edit file ~/.config/bluedevilglobalrc and if you have the following (maybe with different MAC)
