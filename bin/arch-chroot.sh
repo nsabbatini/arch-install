@@ -25,7 +25,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 sed -Ei 's/^(.*CMDLINE_LINUX=)""/\1"lsm=landlock,lockdown,yama,integrity,apparmor,bpf zswap.enabled=1"/' /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
-sed -Ei 's/^(HOOKS.*)\)/\1 grub-btrfs-overlayfs)/g' /mnt/etc/mkinitcpio.conf
+sed -Ei 's/^(HOOKS.*)\)/\1 grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
 sudo mkinitcpio -P
 
 echo "Bootloader done"
@@ -54,10 +54,6 @@ mkdir -p /media/Pictures
 mkdir -p /media/Videos
 mkdir -p /mnt/backup
 echo "Disk mounts done"
-
-# Configure systemd-resolved
-#rm /etc/resolv.conf
-#ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
 echo "Configuring btrfs and snapper"
 btrf filesystem label / ARCH

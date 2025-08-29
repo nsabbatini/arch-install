@@ -46,7 +46,8 @@ poweroff
 # Power-on, login as normal user, then retrive home directory backup from /mnt/backup
 # ###################################################################################
 
-# Fix systemd-resolved
+# Fix systemd-resolved (this cannot be done by the install script because arch-chroot
+# puts its own link in /etc/resolv.conf)
 rm /etc/resolv.conf
 ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
  
@@ -56,19 +57,19 @@ git clone https://aur.archlinux.org/yay-bin.git
 cd yay-bin; makepkg -si
 
 # Install AUR software
-yay -S google-chrome spotify etcher-bin yubico-authenticator-bin downgrade konsave otf-ibm-plex btrfs-assistant
+yay -S btrfs-assitant google-chrome yubico-authenticator-bin
+yay -S spotify etcher-bin downgrade konsave otf-ibm-plex
 sudo systemctl enable --now pcscd.socket
 
 # Create file with NAS credentials (QNAP login on elefante.localdomain)
 vim ~/.cifs_creds
-   username=<user>
-   password=<passwd>
+   username=<NAS_user>
+   password=<NAS_passwd>
 
 # Restore backup
-user=$USER
 host=$(hostname)
-src_dir="/mnt/backup/$host.localdomain/daily.0/$user"
-dst_dir="/home/$user"
+src_dir="/mnt/backup/$host.localdomain/daily.0/$USER"
+dst_dir="/home/$USER"
 rsync -av $src_dir/ $dst_dir/
 
 
@@ -80,29 +81,29 @@ rsync -av $src_dir/ $dst_dir/
 ssh-keygen -t rsa
 ssh-copy-id <other_server>
 
-# Create Yubico keys
+# Create Yubico keys; connect Yubikey first
 sudo pacman -S pam-u2f
 mkdir ~/.config/Yubico
 pamu2fcfg > ~/.config/Yubico/u2f_keys
 
 # Config files to make applications use wayland
-cat << EOF > /home/$user/.config/chrome-flags.conf
+cat << EOF > /home/$USER/.config/chrome-flags.conf
 --enable-features=UseOzonePlatform
 --ozone-platform=wayland
 EOF
 
-cat << EOF > /home/$user/.config/electron-flags.conf
+cat << EOF > /home/$USER/.config/electron-flags.conf
 --enable-features=WaylandWindowDecorations
 --ozone-platform-hint=auto
 EOF
 
-cat << EOF > /home/$user/.config/spotify-flags.conf
+cat << EOF > /home/$USER/.config/spotify-flags.conf
 --enable-features=WaylandWindowDecorations
 --ozone-platform-hint=auto
 EOF
 
-# All KDE Plasma configurations should be restored from backup. If not, instructions
-# are provided in a separate file (
+# All KDE Plasma configurations should be restored from backup. If not,
+# instructions are provided in a separate file (../doc/kde-plasma-configuration)
 
 ##################################################################################
 # End of restore instructions
@@ -142,7 +143,7 @@ sudo brsaneconfig4 -a name=brscanner model=Brother_DCP_B7520DW ip=192.168.1.244
 brsaneconfig4 -q
 sudo systemctl enable --now brscan-skey
 sudo /opt/brother/scanner/brscan-skey/brscan-skey -u <host_name>
-sudo usermod -a -G brscan-skey <user>
+sudo usermod -a -G brscan-skey $USER
 
 
 ###################################################
