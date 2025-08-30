@@ -9,6 +9,7 @@ echo ""
 source /root/arch-install/bin/parameters.sh
 
 echo "Checking config parameters..."
+[[ -z "$user" ]] && { echo "Error: variable user undefined"; exit 1; }
 [[ -z "$disk" ]] && { echo "Error: variable disk undefined"; exit 1; }
 [[ -z "$host" ]] && { echo "Error: variable host undefined"; exit 1; }
 [[ -z "$gpu" ]] && { echo "Error: variable gpu undefined"; exit 1; }
@@ -28,7 +29,7 @@ parted --script $disk -- \
     set 1 esp on
 echo "Done"
 
-echo "Formatting, mounting partitions and creating subvolumes..."
+echo "Format & mount partitions, create subvolumes..."
 
 if [[ $disk =~ .*sd[a-z] ]]; then
     partition1="${disk}1"
@@ -90,7 +91,7 @@ chattr -VR +C /mnt/var/lib/libvirt/images
 mkdir -p /mnt/efi
 mount -t vfat $partition1 /mnt/efi
 
-echo "Formatting and mounting done"
+echo "Done"
 
 if [[ "$multlib" == "enabled" ]]; then
    echo "Enabling multilib packages"
@@ -98,6 +99,12 @@ if [[ "$multlib" == "enabled" ]]; then
    pacman -Sy
    echo "Done"
 fi
+
+# For some packages, pacman asks us to choose from different repositories.
+# The default pacman config allows for 5 parallel download, so the queries
+# to choose repositories can be out of order with the input prompts.
+# Therefore we have to prohibit parallel downloads (unfortunatly).
+sed -Ei 's/^ParallelDownloads/#ParallelDownloads/g' /etc/pacman.conf
 
 echo "Downloading packages..."
 cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacstrap -i /mnt -

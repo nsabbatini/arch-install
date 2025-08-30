@@ -7,9 +7,6 @@ echo ""
 
 # Before running this script, adjust parameters in file "parameters.sh"
 source /root/arch-install/bin/parameters.sh
-[[ -z "$user" ]] && { echo "Error: variable user undefined"; exit 1; }
-[[ -z "$gpu" ]] && { echo "Error: variable gpu undefined"; exit 1; }
-[[ -z "$multilib" ]] && { echo "Error: variable multilib undefined"; exit 1; }
 
 echo "Configuring locale..."
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
