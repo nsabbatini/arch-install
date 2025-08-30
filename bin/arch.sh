@@ -1,5 +1,7 @@
 #!/bin/bash
 
+exec &> >(tee -a "/root/arch.log")
+
 echo "######################"
 echo "Running install script"
 echo "######################"
@@ -93,21 +95,8 @@ mount -t vfat $partition1 /mnt/efi
 
 echo "Done"
 
-if [[ "$multlib" == "enabled" ]]; then
-   echo "Enabling multilib packages"
-   sed -Ei '/^#\[multilib\]/ {s/^#//; n; s/^#//}' /etc/pacman.conf
-   pacman -Sy
-   echo "Done"
-fi
-
-# For some packages, pacman asks us to choose from different repositories.
-# The default pacman config allows for 5 parallel download, so the queries
-# to choose repositories can be out of order with the input prompts.
-# Therefore we have to prohibit parallel downloads (unfortunatly).
-sed -Ei 's/^ParallelDownloads/#ParallelDownloads/g' /etc/pacman.conf
-
-echo "Downloading packages..."
-cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacstrap -i /mnt -
+echo "Executing pacstrap..."
+pacstrap -i /mnt base
 echo "Done"
 
 echo "Creating /etc/fstab..."

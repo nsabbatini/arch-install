@@ -1,5 +1,7 @@
 #!bin/bash
 
+exec &> >(tee -a "/root/arch-chroot.log")
+
 echo "############################"
 echo "Running install under chroot"
 echo "############################"
@@ -7,6 +9,16 @@ echo ""
 
 # Before running this script, adjust parameters in file "parameters.sh"
 source /root/arch-install/bin/parameters.sh
+
+if [[ "$multlib" == "enabled" ]]; then
+   echo "Enabling multilib packages"
+   sed -Ei '/^#\[multilib\]/ {s/^#//; n; s/^#//}' /etc/pacman.conf
+   echo "Done"
+fi
+
+echo "Installing packages..."
+cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacman -S -
+echo "Done"
 
 echo "Configuring locale..."
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
@@ -26,12 +38,6 @@ sed -Ei 's/^(HOOKS.*)\)/\1 grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
 sudo mkinitcpio -P
 
 echo "Bootloader done"
-
-if [[ "$multlib" == "enabled" ]]; then
-   echo "Enabling multilib packages"
-   sed -Ei '/^#\[multilib\]/ {s/^#//; n; s/^#//}' /etc/pacman.conf
-   echo "Done"
-fi
 
 echo "Setting root password..."
 echo "Choose a password for root account"
