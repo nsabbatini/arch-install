@@ -17,6 +17,7 @@ if [[ "$multlib" == "enabled" ]]; then
 fi
 
 echo "Installing packages..."
+pacman -Sy
 cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacman -S -
 echo "Done"
 
