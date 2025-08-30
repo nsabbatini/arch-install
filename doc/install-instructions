@@ -22,7 +22,7 @@ timedatectl set-timezone America/Sao_Paulo
 passwd
 
 # Find the IP address, so we can ssh from another Linux host
-ip -a
+ip a
 
 # From the other host
 ssh root@<ip_address>
@@ -37,7 +37,7 @@ pacman -S git
 git clone https://github.com/nsabbatini/arch-install.git
 
 ######### DON'T FORGET TO MODIFY THE PARAMETERS FILE ##########
-# Configure install parameters in file /root/router/bin/parameters.sh and run install script
+# Configure install parameters in file /root/arch-install/bin/parameters.sh and run install script
 /root/arch-install/bin/arch.sh > >(tee -a /root/arch.stdout.log) 2> >(tee -a /root/arch.stderr.log >&2)
 
 # Save install log to SSD
