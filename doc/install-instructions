@@ -18,8 +18,14 @@ iwctl station <device> connect <network>
 timedatectl set-ntp true
 timedatectl set-timezone America/Sao_Paulo 
 
-# Edit /etc/ssh/sshd_config and change PermitRootLogin to yes, then create root password
+# Create root password
 passwd
+
+# Find the IP address, so we can ssh from another Linux host
+ip -a
+
+# From the other host
+ssh root@<ip_address>
 
 # Make sure keyring is updated
 pacman -Sy
@@ -32,7 +38,7 @@ git clone https://github.com/nsabbatini/arch-install.git
 
 ######### DON'T FORGET TO MODIFY THE PARAMETERS FILE ##########
 # Configure install parameters in file /root/router/bin/parameters.sh and run install script
-/root/arch-plasma/bin/arch.sh > >(tee -a /root/arch.stdout.log) 2> >(tee -a /root/arch.stderr.log >&2)
+/root/arch-install/bin/arch.sh > >(tee -a /root/arch.stdout.log) 2> >(tee -a /root/arch.stderr.log >&2)
 
 # Save install log to SSD
 cp /root/*.log /mnt/root/

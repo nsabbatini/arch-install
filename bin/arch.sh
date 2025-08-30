@@ -100,7 +100,7 @@ if [[ "$multlib" == "enabled" ]]; then
 fi
 
 echo "Downloading packages..."
-cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacstrap -i --needed /mnt -
+cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacstrap -i /mnt -
 echo "Done"
 
 echo "Creating /etc/fstab..."
