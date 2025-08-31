@@ -17,8 +17,8 @@ if [[ "$multlib" == "enabled" ]]; then
 fi
 
 echo "Installing packages..."
-stdbuf -oL -eL pacman -Sy
-cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacman -S -
+pacman -Sy
+cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  stdbuf -oL -eL pacman -S -
 echo "Done"
 
 echo "Configuring locale..."

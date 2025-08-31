@@ -33,7 +33,7 @@ pacman -S --needed archlinux-keyring
 
 # Make an ssh connection from another linux machine and copy (with scp) the install
 # scripts; or else clone from github
-pacman -S git btrfs-progs
+pacman -S git
 git clone https://github.com/nsabbatini/arch-install.git
 
 ######### DON'T FORGET TO MODIFY THE PARAMETERS FILE ##########
