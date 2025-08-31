@@ -59,12 +59,6 @@ mkdir -p /media/Videos
 mkdir -p /mnt/backup
 echo "Disk mounts done"
 
-echo "Configuring btrfs and snapper"
-btrfs filesystem label / ARCH
-snapper -c root create-config /
-snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
-echo "Done"
-
 echo "Enabling systemd services..."
 systemctl enable nftables
 systemctl enable cups
@@ -98,6 +92,12 @@ if [[ $gpu == "nvidia" ]]; then
    sudo systemctl enable nvidia-resume.service
 fi
 echo "Enabling services done"
+
+echo "Configuring btrfs and snapper"
+btrfs filesystem label / ARCH
+snapper -c root create-config /
+snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
+echo "Done"
 
 echo ""
 echo "#############################"
