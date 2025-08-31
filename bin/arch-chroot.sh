@@ -17,7 +17,7 @@ if [[ "$multlib" == "enabled" ]]; then
 fi
 
 echo "Installing packages..."
-pacman -Sy
+stdbuf -oL -eL pacman -Sy
 cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  pacman -S -
 echo "Done"
 
@@ -60,7 +60,7 @@ mkdir -p /mnt/backup
 echo "Disk mounts done"
 
 echo "Configuring btrfs and snapper"
-btrf filesystem label / ARCH
+btrfs filesystem label / ARCH
 snapper -c root create-config /
 snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
 echo "Done"

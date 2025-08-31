@@ -1,5 +1,4 @@
 # Basic packages
-base
 base-devel
 linux
 linux-headers

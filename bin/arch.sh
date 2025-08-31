@@ -96,7 +96,7 @@ mount -t vfat $partition1 /mnt/efi
 echo "Done"
 
 echo "Executing pacstrap..."
-pacstrap -i /mnt base
+stdbuf -oL -eL pacstrap -i /mnt base
 echo "Done"
 
 echo "Creating /etc/fstab..."
@@ -168,12 +168,13 @@ cp -r /root/arch-install /mnt/root/
 echo "Done"
 
 echo "Invoking install script to be run under chroot..."
-arch-chroot /mnt bash -c "/root/arch-install/bin/arch-chroot.sh > >(tee -a /root/arch-chroot.stdout.log) 2> >(tee -a /root/arch-chroot.stderr.log >&2)"
+arch-chroot /mnt bash -c "/root/arch-install/bin/arch-chroot.sh"
 echo "Done"
 
 echo ""
 echo "#######################"
 echo "Finished install script"
 echo "#######################"
+echo ""
 
 exit 0
