@@ -24,32 +24,42 @@ passwd
 # Find the IP address, so we can ssh from another Linux host
 ip a
 
-# From the other host
+# Now, it is easier to make an ssh connection from another linux machine.
+# From another host:
 ssh root@<ip_address>
 
-# Make sure keyring is updated
-pacman -Sy
-pacman -S --needed archlinux-keyring
+# Update the keyring and install git
+pacman -Sy --needed archlinux-keyring git
 
-# Make an ssh connection from another linux machine and copy (with scp) the install
-# scripts; or else clone from github
-pacman -S git
+# Download the install scripts
 git clone https://github.com/nsabbatini/arch-install.git
 
-######### DON'T FORGET TO MODIFY THE PARAMETERS FILE ##########
-# Configure install parameters in file /root/arch-install/bin/parameters.sh and run install script
+###################################################################
+#                       DON'T FORGET                              #
+# Configure parameters in file /root/arch-install/bin/parameters.sh
+###################################################################
+
+# Run the pre-chroot script. If pacstrap fails, fix the issue
+# and run again with the '-s' argument, so that everything 
+# before pacstrap is skipped
 /root/arch-install/bin/arch.sh
+#/root/arch-install/bin/arch.sh -s
 
-# Save install log to SSD
-cp /root/.log /mnt/root/
+# Save the log
+cp /root/arch.log /mnt/root/
 
-# Remove install media and power-off
+# Run the post-chroot script
+arch-chroot /mnt bash -c "/root/arch-install/bin/arch-chroot.sh"
+
+# Exit chroot and unmount partitions
+exit
 umount -a
+
 poweroff
 
 
 # ###################################################################################
-# Power-on, login as normal user, then retrive home directory backup from /mnt/backup
+# Power-on, login as normal user
 # ###################################################################################
 
 # Fix systemd-resolved (this cannot be done by the install script because arch-chroot
@@ -63,16 +73,21 @@ git clone https://aur.archlinux.org/yay-bin.git
 cd yay-bin; makepkg -si
 
 # Install AUR software
-yay -S btrfs-assitant google-chrome yubico-authenticator-bin
-yay -S spotify etcher-bin downgrade konsave otf-ibm-plex
+yay -S btrfs-assitant google-chrome yubico-authenticator-bin \
+       spotify etcher-bin downgrade konsave otf-ibm-plex
 sudo systemctl enable --now pcscd.socket
+
+# Configure btrfs and snapper
+sudo btrfs filesystem label / ARCH
+sudo snapper -c root create-config /
+sudo snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
 
 # Create file with NAS credentials (QNAP login on elefante.localdomain)
 vim ~/.cifs_creds
    username=<NAS_user>
    password=<NAS_passwd>
 
-# Restore backup
+# Restore backup to the home directory
 host=$(hostname)
 src_dir="/mnt/backup/$host.localdomain/daily.0/$USER"
 dst_dir="/home/$USER"
@@ -108,7 +123,7 @@ cat << EOF > /home/$USER/.config/spotify-flags.conf
 --ozone-platform-hint=auto
 EOF
 
-# All KDE Plasma configurations should be restored from backup. If not,
+# If KDE Plasma configurations could not be restored from backup,
 # instructions are provided in a separate file (../doc/kde-plasma-configuration)
 
 ##################################################################################

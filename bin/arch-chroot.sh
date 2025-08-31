@@ -13,19 +13,20 @@ source /root/arch-install/bin/parameters.sh
 if [[ "$multlib" == "enabled" ]]; then
    echo "Enabling multilib packages"
    sed -Ei '/^#\[multilib\]/ {s/^#//; n; s/^#//}' /etc/pacman.conf
-   echo "Done"
 fi
 
+echo "Running reflector..."
+reflector --country 'US,BR' --sort rate --fastest 5 --save /etc/pacman.d/mirrorlist
+
 echo "Installing packages..."
-pacman -Sy
-cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  stdbuf -oL -eL pacman -S -
-echo "Done"
+pacman -Syu
+cat $pkg_list $pkg_list_extra | sed -E '/^#/d' | sed -E '/^\s*$/d' |  stdbuf -oL -eL pacman -S --needed -
+[[ $? == 0 ]] || { echo "Error: pacman failed, fix and run again"; exit 1; }
 
 echo "Configuring locale..."
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
 locale-gen
-echo "Locale done"
 
 echo "Installing boot loader..."
 
@@ -38,26 +39,21 @@ grub-mkconfig -o /boot/grub/grub.cfg
 sed -Ei 's/^(HOOKS.*)\)/\1 grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
 sudo mkinitcpio -P
 
-echo "Bootloader done"
-
 echo "Setting root password..."
 echo "Choose a password for root account"
 passwd root
-echo "Root password done"
 
 echo "Creating non-root user account"
 useradd -m -G wheel,libvirt $user
 sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/g' /etc/sudoers
 echo "Choose a password for your user account"
 passwd $user
-echo "Non-root account done"
 
 echo "Creating disk mounts for backup and media"
 mkdir -p /media/Music
 mkdir -p /media/Pictures
 mkdir -p /media/Videos
 mkdir -p /mnt/backup
-echo "Disk mounts done"
 
 echo "Enabling systemd services..."
 systemctl enable nftables
@@ -91,13 +87,6 @@ if [[ $gpu == "nvidia" ]]; then
    sudo systemctl enable nvidia-hibernate.service
    sudo systemctl enable nvidia-resume.service
 fi
-echo "Enabling services done"
-
-echo "Configuring btrfs and snapper"
-btrfs filesystem label / ARCH
-snapper -c root create-config /
-snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
-echo "Done"
 
 echo ""
 echo "#############################"

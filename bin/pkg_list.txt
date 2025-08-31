@@ -49,7 +49,6 @@ cryfs
 inotify-tools
 
 # Package manager
-reflector
 rebuild-detector
 flatpak
 
