@@ -51,10 +51,10 @@ cp /root/arch.log /mnt/root/
 # Run the post-chroot script
 arch-chroot /mnt bash -c "/root/arch-install/bin/arch-chroot.sh"
 
-# Exit chroot and unmount partitions
+# Exit from remote machine
 exit
-umount -a
 
+# Back to local host
 poweroff
 
 
@@ -62,25 +62,27 @@ poweroff
 # Power-on, login as normal user
 # ###################################################################################
 
-# Fix systemd-resolved (this cannot be done by the install script because arch-chroot
-# puts its own link in /etc/resolv.conf)
-rm /etc/resolv.conf
-ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
- 
-# Install yay
-mkdir /home/$USER/aur; cd /home/$USER/aur
-git clone https://aur.archlinux.org/yay-bin.git
-cd yay-bin; makepkg -si
-
-# Install AUR software
-yay -S btrfs-assitant google-chrome yubico-authenticator-bin \
-       spotify etcher-bin downgrade konsave otf-ibm-plex
-sudo systemctl enable --now pcscd.socket
-
 # Configure btrfs and snapper
 sudo btrfs filesystem label / ARCH
 sudo snapper -c root create-config /
 sudo snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
+sudo snapper -c root create --description "Fresh after install"
+
+# Fix systemd-resolved (this cannot be done by the install script because arch-chroot
+# puts its own link in /etc/resolv.conf)
+sudo rm /etc/resolv.conf
+sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+ 
+# Install yay
+mkdir /home/$USER/aur; cd /home/$USER/aur
+git clone https://aur.archlinux.org/yay-bin.git
+cd yay-bin; makepkg -si;
+
+# Install AUR software
+yay -S btrfs-assistant google-chrome librewolf-bin yubico-authenticator-bin \
+       spotify etcher-bin downgrade konsave otf-ibm-plex brother-dcp-b7520dw \
+       brscan4 brscan-skey gtk2
+sudo systemctl enable --now pcscd.socket
 
 # Create file with NAS credentials (QNAP login on elefante.localdomain)
 vim ~/.cifs_creds
@@ -147,19 +149,16 @@ vim /etc/pam.d/su
 # Repeat for /etc/pam/su-l
 exit
 
-# Install Brother printer driver
-yay -S brother-dcp-b7520dw
 # Setup printer in http:localhost:631
 #    Admin -> Add printer -> LPD/LPR
 #    Connection: lpd://192.168.1.244/binary-p1
 #    Name: brlaser, Description: DCP-B7520DW
 #    Maker/Manufacturer: Brother, then click on "Brother" and select driver
 
-# Install scanner driver and service to accept scan initiated remotely on the scanner.
+# Configure scanner and service to accept scan initiated remotely on the scanner.
 # Scans initiated remotely are stored in /srv/brscan-skey/brscan, under user brscan-skey,
 # need to open port UDP 54925 on the firewall. To facilitate handling files in
 # /srv/brscan-skey, we put the main user into brscan-skey group.
-yay -S brscan4 brscan-skey gtk2
 sudo brsaneconfig4 -a name=brscanner model=Brother_DCP_B7520DW ip=192.168.1.244
 brsaneconfig4 -q
 sudo systemctl enable --now brscan-skey
@@ -182,7 +181,30 @@ sudo btrfs filesystem usage /
 # View snapper configs
 sudo snapper list-configs
 snapper ls
-ls -l /.snapshots/
+
+# Create single snapshot
+sudo snapper -c myconfig create --description "My first snapshot"
+
+# Create pre/post snapshot for a command
+sudo snapper -c myconfig create --command "curl ... | bash" --description "Dangerous remote command"
+
+# Manually create pre/post snapshots. Annotare number from 'pre' creation and use on 'post'.
+sudo snapper -c myconfig create -t pre --description "Before major change"
+sudo snapper -c myconfig create -t post --pre-number N --description "After major changes"
+
+# For a full rollback (requires reboot)
+ sudo snapper list
+ sudo snapper rollback [snapshot_id]
+ # Reboot to apply the rollback
+ 
+ # To restore specific file or directory
+ # Use 'snapper status' and 'snapper change' to identify the changes between the two pre/post snapshots
+ sudo snapper status [PRE_snapshot_ID]..[POST_snapshot_ID]
+ sudo snapper diff [PRE_snapshot_ID]..[POST_snapshot_ID]
+
+# Restore the changed files using the undochange command
+sudo snapper undochange [PRE_snapshot_ID]..[POST_snapshot_ID] [filename]
+# If filename is ommited, all changed files are restored.
 
 # The following is a workaroud for a KDE Plasma bug, which disables bluetooth after login.
 # Edit file ~/.config/bluedevilglobalrc and if you have the following (maybe with different MAC)
