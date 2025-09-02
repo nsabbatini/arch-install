@@ -73,9 +73,9 @@ git clone https://aur.archlinux.org/yay-bin.git
 cd yay-bin; makepkg -si;
 
 # Install AUR software
-yay -S btrfs-assistant google-chrome librewolf-bin yubico-authenticator-bin \
-       spotify etcher-bin downgrade konsave otf-ibm-plex brother-dcp-b7520dw \
-       brscan4 brscan-skey gtk2
+yay -S --batchinstall btrfs-assistant google-chrome librewolf-bin \
+       yubico-authenticator-bin spotify etcher-bin downgrade konsave \
+       otf-ibm-plex brother-dcp-b7520dw brscan4 brscan-skey gtk2
 sudo systemctl enable --now pcscd.socket
 
 # For the desktop (gaming machine)
