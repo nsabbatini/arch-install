@@ -19,6 +19,7 @@ nvtop
 steam
 ttf-liberation
 lib32-systemd
+gamescope
 
 # Lutris
 lutris
@@ -41,5 +42,3 @@ wine
 wine-mono
 winetricks
 xorg-xgamma
-
-# Install Heroic Launcher flatpack version using KDE Discover

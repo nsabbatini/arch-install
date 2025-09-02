@@ -1,13 +1,13 @@
 [Unit]
-Description=CIFS mount (Backup-linux on elefante)
+Description=NFS mount (linux-backup on elefante)
 After=wait-for-ping.service
 
 [Mount]
-What=//192.168.1.104/Backup-linux
+What=192.168.1.104:/linux-backup
 Where=/mnt/backup
-Type=cifs
+Type=nfs4
 TimeoutSec=20s
-Options=nofail,noauto,_netdev,user,rw,x-systemd.automount,x-systemd.mount-timeout=20,x-systemd.idle-timeout=10,iocharset=utf8,uid=1000,gid=1000,credentials=/home/narcizo/.cifs_creds
+Options=_netdev,auto
 LazyUnmount=true
 ForceUnmount=true
 

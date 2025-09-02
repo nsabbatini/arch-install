@@ -79,6 +79,7 @@ systemctl enable media-Music.automount
 systemctl enable media-Pictures.automount
 systemctl enable media-Videos.automount
 systemctl enable mnt-backup.automount
+systemctl enable wait-for-ping
 systemctl enable snapper-timeline.timer
 systemctl enable snapper-cleanup.timer
 systemctl enable grub-btrfsd.service

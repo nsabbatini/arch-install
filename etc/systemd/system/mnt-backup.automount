@@ -1,5 +1,5 @@
 [Unit]
-Description=CIFS automount (Backup-linux on elefante)
+Description=NFS automount (linux-backup on elefante)
 
 [Automount]
 Where=/mnt/backup

@@ -71,6 +71,7 @@ net-tools
 cloudflared
 samba
 cifs-utils
+nfs-utils
 
 # Printer
 cups
