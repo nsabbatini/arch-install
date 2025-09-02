@@ -34,7 +34,7 @@ grub-install --target=x86_64-efi --efi-directory=/efi --boot-directory=/boot --b
 grub-mkconfig -o /boot/grub/grub.cfg
 
 sed -Ei 's/^(.*CMDLINE_LINUX=)""/\1"lsm=landlock,lockdown,yama,integrity,apparmor,bpf zswap.enabled=1"/' /etc/default/grub
-sed -Ei 's/^#(GRUB_THEME).*$/\1="\/user\/share\/grub\/themes\/breeze\/theme.txt"/' /etc/default/grub
+sed -Ei 's/^#(GRUB_THEME).*$/\1="\/usr\/share\/grub\/themes\/breeze\/theme.txt"/' /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
 sed -Ei 's/^(HOOKS.*)\)/\1 grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf

@@ -62,12 +62,6 @@ poweroff
 # Power-on, login as normal user
 # ###################################################################################
 
-# Configure btrfs and snapper
-sudo btrfs filesystem label / ARCH
-sudo snapper -c root create-config /
-sudo snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
-sudo snapper -c root create --description "Fresh after install"
-
 # Fix systemd-resolved (this cannot be done by the install script because arch-chroot
 # puts its own link in /etc/resolv.conf)
 sudo rm /etc/resolv.conf
@@ -87,17 +81,18 @@ sudo systemctl enable --now pcscd.socket
 # For the desktop (gaming machine)
 yay -S heroic-games-launcher-bin protontricks
 
-# Create file with NAS credentials (QNAP login on elefante.localdomain)
-vim ~/.cifs_creds
-   username=<NAS_user>
-   password=<NAS_passwd>
-
 # Restore backup to the home directory
 host=$(hostname)
 src_dir="/mnt/backup/$host.localdomain/daily.0/$USER"
 dst_dir="/home/$USER"
 rsync -av $src_dir/ $dst_dir/
 
+
+# Configure btrfs and snapper
+sudo btrfs filesystem label / ARCH
+sudo snapper -c root create-config /
+sudo snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
+sudo snapper -c root create --description "Fresh after install"
 
 ##################################################################################
 # If not able to recover backup, the following can be recreated
