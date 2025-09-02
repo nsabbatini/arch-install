@@ -51,6 +51,7 @@ inotify-tools
 # Package manager
 rebuild-detector
 flatpak
+flatpak-kcm
 
 # Network
 nftables
@@ -193,3 +194,6 @@ edk2-ovmf
 virt-manager
 virt-viewer
 swtpm
+
+# Themes
+breeze-grub
