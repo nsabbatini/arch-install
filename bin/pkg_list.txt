@@ -10,7 +10,7 @@ apparmor
 # btrfs
 btrfs-progs
 snapper
-snap-pac
+#snap-pac
 grub-btrfs
 
 # Shell

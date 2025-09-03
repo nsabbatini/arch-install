@@ -62,37 +62,14 @@ poweroff
 # Power-on, login as normal user
 # ###################################################################################
 
-# Fix systemd-resolved (this cannot be done by the install script because arch-chroot
-# puts its own link in /etc/resolv.conf)
-sudo rm /etc/resolv.conf
-sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
- 
-# Install yay
-mkdir /home/$USER/aur; cd /home/$USER/aur
-git clone https://aur.archlinux.org/yay-bin.git
-cd yay-bin; makepkg -si;
+# Clone ths install scripts
+mkdir /home/$USER/github
+cd /home/$USER/github
+git clone https://github.com/nsabbatini/arch-install.git
 
-# Install AUR software
-yay -S --batchinstall btrfs-assistant google-chrome librewolf-bin \
-       yubico-authenticator-bin spotify etcher-bin downgrade konsave \
-       otf-ibm-plex brother-dcp-b7520dw brscan4 brscan-skey gtk2
-sudo systemctl enable --now pcscd.socket
+# Run the post install scripts; it will recover backup
+/home/$USER/git/arch-install/bin/arch-post-install.sh
 
-# For the desktop (gaming machine)
-yay -S heroic-games-launcher-bin protontricks
-
-# Restore backup to the home directory
-host=$(hostname)
-src_dir="/mnt/backup/$host.localdomain/daily.0/$USER"
-dst_dir="/home/$USER"
-rsync -av $src_dir/ $dst_dir/
-
-
-# Configure btrfs and snapper
-sudo btrfs filesystem label / ARCH
-sudo snapper -c root create-config /
-sudo snapper -c root set-config ALLOW_USERS="$user" SYNC_ACL=yes
-sudo snapper -c root create --description "Fresh after install"
 
 ##################################################################################
 # If not able to recover backup, the following can be recreated
