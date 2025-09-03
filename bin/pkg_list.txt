@@ -29,6 +29,7 @@ solaar
 usbutils
 util-linux
 xdg-utils
+pam-u2f
 
 # Dev tools
 vim
