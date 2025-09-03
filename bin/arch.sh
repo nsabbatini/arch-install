@@ -75,7 +75,7 @@ if [[ $skip_partition == "false" ]]; then
    echo "Formatting"
    mkfs.vfat $partition1
    mkswap $partition2
-   mkfs.btrfs $partition3
+   mkfs.btrfs -f $partition3
 
    echo "Mounting swap partition"
    swapon $partition2
