@@ -89,6 +89,7 @@ pipewire-alsa
 pipewire-jack
 pipewire-pulse
 wireplumber
+alsa-utils
 
 # Graphics
 mesa
