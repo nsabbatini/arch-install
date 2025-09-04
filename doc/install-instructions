@@ -62,13 +62,15 @@ poweroff
 # Power-on, login as normal user
 # ###################################################################################
 
-# Clone ths install scripts
-mkdir /home/$USER/github
-cd /home/$USER/github
-git clone https://github.com/nsabbatini/arch-install.git
+# Run the post install scripts that was copied to /root by the install script.
+# Supply the username and password of the NAS server, and the IP address of the
+# Brother printer/scanner
+sudo cp /root/arch-install/bin/arch-post-install.sh .
+./arch-post-install.sh <NAS-username> <NAS-password> <scanner-ip>
 
-# Run the post install scripts; it will recover backup
-/home/$USER/git/arch-install/bin/arch-post-install.sh
+# If backup was not successful see below how to create missing data
+# We can now remove the post install file from the home directory
+rm arch-post-install.sh
 
 
 ##################################################################################
@@ -128,17 +130,8 @@ exit
 #    Admin -> Add printer -> LPD/LPR
 #    Connection: lpd://192.168.1.244/binary-p1
 #    Name: brlaser, Description: DCP-B7520DW
-#    Maker/Manufacturer: Brother, then click on "Brother" and select driver
-
-# Configure scanner and service to accept scan initiated remotely on the scanner.
-# Scans initiated remotely are stored in /srv/brscan-skey/brscan, under user brscan-skey,
-# need to open port UDP 54925 on the firewall. To facilitate handling files in
-# /srv/brscan-skey, we put the main user into brscan-skey group.
-sudo brsaneconfig4 -a name=brscanner model=Brother_DCP_B7520DW ip=192.168.1.244
-brsaneconfig4 -q
-sudo systemctl enable --now brscan-skey
-sudo /opt/brother/scanner/brscan-skey/brscan-skey -u <host_name>
-sudo usermod -a -G brscan-skey $USER
+#    Maker/Manufacturer: Brother
+#    Click on "Brother" and select driver (not the driverless one)
 
 
 ###################################################
@@ -168,14 +161,14 @@ sudo snapper -c myconfig create -t pre --description "Before major change"
 sudo snapper -c myconfig create -t post --pre-number N --description "After major changes"
 
 # For a full rollback (requires reboot)
- sudo snapper list
- sudo snapper rollback [snapshot_id]
- # Reboot to apply the rollback
+sudo snapper list
+sudo snapper rollback [snapshot_id]
+# Reboot to apply the rollback
  
- # To restore specific file or directory
- # Use 'snapper status' and 'snapper change' to identify the changes between the two pre/post snapshots
- sudo snapper status [PRE_snapshot_ID]..[POST_snapshot_ID]
- sudo snapper diff [PRE_snapshot_ID]..[POST_snapshot_ID]
+# To restore specific file or directory
+# Use 'snapper status' and 'snapper change' to identify the changes between the two pre/post snapshots
+sudo snapper status [PRE_snapshot_ID]..[POST_snapshot_ID]
+sudo snapper diff [PRE_snapshot_ID]..[POST_snapshot_ID]
 
 # Restore the changed files using the undochange command
 sudo snapper undochange [PRE_snapshot_ID]..[POST_snapshot_ID] [filename]
