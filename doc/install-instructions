@@ -66,6 +66,7 @@ poweroff
 # Supply the username and password of the NAS server, and the IP address of the
 # Brother printer/scanner
 sudo cp /root/arch-install/bin/arch-post-install.sh .
+sudo chown $USER: arch-post-install.sh
 ./arch-post-install.sh <NAS-username> <NAS-password> <scanner-ip>
 
 # If backup was not successful see below how to create missing data
