@@ -10,7 +10,7 @@ echo ""
 # Before running this script, adjust parameters in file "parameters.sh"
 source /root/arch-install/bin/parameters.sh
 
-if [[ "$multlib" == "enabled" ]]; then
+if [[ "$multilib" == "enabled" ]]; then
    echo "Enabling multilib packages"
    sed -Ei '/^#\[multilib\]/ {s/^#//; n; s/^#//}' /etc/pacman.conf
 fi
