@@ -26,8 +26,14 @@
 #    Keep System Tray
 # Exit edit mode
 
-# If using "Command Output" widget, configure it to use scripts in ~/bin/network-status.sh
-# (for command) and ~/bin/network-hover.sh (for tooltip action).
+# Create tray icons using "Command Output" widget:
+#    wifi: configure "command output" with ~/bin/network-status.sh in the command field,
+#          and ~/bin/network-hover.sh in the actions->Tooltip field.
+#    Temperature: configure "command output" with ~/bin/thermometer.sh in the command field,
+#          and ~/bin/temperature.sh in the actions->tooltip action field.
+#    microphone: configure "command output" with ~/bin/mic_status.sh in the command field,
+#          ~/bin/mic_volume.sh in the actions->tooltip action field, and ~/bin/mic_toggle
+#          in the actions->click field. Only lince has a microphone.
 
 # If using systemd-networkd with iwd, there is no widget on the system tray to connecto to wifi.
 # Instead, use iwctl (iwctl --help) or impala. There is also a helpful alias in .bashrc
@@ -87,4 +93,17 @@ konsave -i </path/to/export-name>
 # Click Steam properties button -> application tab, then set the following arguments:
 # %U -silent
 
+############################################
+# Miscellaneous
+############################################
+
+# The following is a workaroud for a KDE Plasma bug, which disables bluetooth after login.
+# Edit file ~/.config/bluedevilglobalrc and if you have the following (maybe with different MAC)
+[Adapters]
+4C:1D:96:DB:07:A8_powered=false
+# change to
+[Adapters]
+4C:1D:96:DB:07:A8_powered=true
+# then disable write permission on this file to prevent bluedevil from modifying it again:
+chmod -w ~/.config/bluedevilglobalrc
 

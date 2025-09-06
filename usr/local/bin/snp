@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Runs a command wrapped in btrfs snapper pre-post snapshots
+# Usage: $ snp <commands>
+# e.g.: $ snp sudo pacman -Syu
+
+log_path="/var/log/snp"
+date=$(date "+%Y-%m-%d-%H%M%S")
+log_file="${log_path}/snp_${date}.log"
+
+[ -d ${log_path} ] || { sudo mkdir -p ${log_path}; sudo chown ${USER}: ${log_path}; }
+
+cmd="$@"
+
+[[ "$@" =~ ^pacman.* ]] && { echo "Need sudo, run: snp sudo pacman <options>"; exit 1; }
+[[ "$@" =~ ^sudo.*yay ]] && { echo "Don't use sudo, run: snp yay <options>"; exit 1; }
+
+echo "Logging to: ${log_file}"
+
+{
+snapshot_nbr=$(snapper create --type=pre --cleanup-algorithm=number --print-number --description="${cmd}")
+echo "New pre snapshot with number ${snapshot_nbr}"
+echo "Running command \"${cmd}\""
+
+eval "$cmd"
+
+snapshot_nbr=$(snapper create --type=post --cleanup-algorithm=number --print-number --pre-number="${snapshot_nbr}")
+echo -e "\nNew post snapshot with number ${snapshot_nbr}\n"
+} | tee $log_file
+
+exit 0

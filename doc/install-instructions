@@ -136,7 +136,7 @@ exit
 
 
 ###################################################
-# Miscellaneous
+# BTRFS and snapper
 ###################################################
 
 # View partitions and subvolumes
@@ -144,7 +144,7 @@ lsblk -pf /dev/nvme0n1
 sudo btrfs subvolume list /
 
 # View filesystem
-sudo btrf filesystem show /
+sudo btrfs filesystem show /
 sudo btrfs filesystem usage /
 
 # View snapper configs
@@ -156,6 +156,10 @@ sudo snapper -c myconfig create --description "My first snapshot"
 
 # Create pre/post snapshot for a command
 sudo snapper -c myconfig create --command "curl ... | bash" --description "Dangerous remote command"
+
+# There is a custom script (/usr/local/bin/snp) to  make pre/post snapshots easier. Example usage:
+snp sudo pacman -Syu
+snp yay -Syu
 
 # Manually create pre/post snapshots. Annotare number from 'pre' creation and use on 'post'.
 sudo snapper -c myconfig create -t pre --description "Before major change"
@@ -175,15 +179,6 @@ sudo snapper diff [PRE_snapshot_ID]..[POST_snapshot_ID]
 sudo snapper undochange [PRE_snapshot_ID]..[POST_snapshot_ID] [filename]
 # If filename is ommited, all changed files are restored.
 
-# The following is a workaroud for a KDE Plasma bug, which disables bluetooth after login.
-# Edit file ~/.config/bluedevilglobalrc and if you have the following (maybe with different MAC)
-[Adapters]
-4C:1D:96:DB:07:A8_powered=false
-# change to
-[Adapters]
-4C:1D:96:DB:07:A8_powered=true
-# then disable write permission on this file to prevent bluedevil from modifying it again:
-chmod -w ~/.config/bluedevilglobalrc
 
 
 ###############################################################################################
@@ -198,5 +193,18 @@ protontricks-launch --appid <game-steam-id> /path/to/mswindows-program
 
 # To patch kotor 1/2 run:
 ~/Games/kotor/KOTORModSync/KOTORModSync
-# In case of kotor2, change to lower case with ~/bin/fix-kotor2 in folders:
-# steam-game-folder/{override,modules,movies,streamusic,streamvoice,stremsound}
+# For kotor2:
+# Click "Load Installation File" and choose my_toml_kotor2_instructions-kira.toml
+# Click "Set Directories and choose:
+#    Kotor location: ~/Games/steam/common/Knights of the Old Republic II/steamassets
+#    Mods location: ~/Games/kotor/kotor2_mods
+#    Select all mods by clicking to the left of "Available Mods" in the left pane
+#    Click "pre-Install Validation"; if errors occur, try to fix
+#    Click "Start Install"
+# Change to lower case with ~/bin/fix-kotor2 in folders (maybe not for kotor 1)
+for f in override/*; do test -f $f && mv "$f" "${f,,}"; done
+for f in modules/*; do test -f $f && mv "$f" "${f,,}"; done
+for f in movies/*; do test -f $f && mv "$f" "${f,,}"; done
+for f in streammusic/*; do test -f $f && mv "$f" "${f,,}"; done
+for f in streamvoice/*; do test -f $f && mv "$f" "${f,,}"; done
+for f in streamsounds/*; do test -f $f && mv "$f" "${f,,}"; done

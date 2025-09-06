@@ -18,6 +18,7 @@ bash-completion
 man-db
 man-pages
 dialog
+btop
 bc
 
 # System maintenance
