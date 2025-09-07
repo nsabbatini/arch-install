@@ -1,5 +1,5 @@
 [Unit]
-Description=CIFS automount (Pictures on elefante)
+Description=NFS automount (Pictures on elefante)
 
 [Automount]
 Where=/media/Pictures

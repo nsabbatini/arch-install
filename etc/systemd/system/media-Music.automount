@@ -1,5 +1,5 @@
 [Unit]
-Description=CIFS automount (Music on elefante)
+Description=NFS automount (Music on elefante)
 
 [Automount]
 Where=/media/Music

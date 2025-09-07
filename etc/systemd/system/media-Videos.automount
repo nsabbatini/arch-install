@@ -1,5 +1,5 @@
 [Unit]
-Description=CIFS automount (Videos on elefante)
+Description=NFS automount (Videos on elefante)
 
 [Automount]
 Where=/media/Videos
