@@ -60,7 +60,8 @@ sudo snapper -c root create --description "Fresh after install"
 src_dir="/mnt/backup/$host.localdomain/daily.0/$USER"
 dst_dir="/home/$USER"
 if [[ -d $src_dir ]]; then
-   rsync -av $src_dir/ $dst_dir/
+   # Need to ran with sudo to preserve ownership
+   sudo rsync -a --stats $src_dir/ $dst_dir/
 else
    echo "Could not access backup source dir"
    exit 1
