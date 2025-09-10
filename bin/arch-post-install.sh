@@ -1,11 +1,11 @@
 #!/bin/bash
 
+exec &> >(tee -a "$HOME/arch-chroot.log")
+
 [[ $# -eq 0 ]] && { echo "No parameters supplied"; exit 1; }
 
-cifs_user=$1
-cifs_passwd=$2
-brother_ip=$3
-
+machine=$1
+brother_ip=$2
 host=$(hostname)
 
 # Fix systemd-resolved (this cannot be done by the install script because arch-chroot
@@ -25,19 +25,13 @@ yay -S --batchinstall btrfs-assistant google-chrome librewolf-bin \
 sudo systemctl enable --now pcscd.socket
 
 # For the desktop (gaming machine)
-if [[  $host == "castor" ]]; then
+if [[  $machine == "desktop" ]]; then
    yay -S heroic-games-launcher-bin protontricks
 fi
 
-# Create credentias for the NAS smb mounts
-cat << EOF > ~/.cifs_creds
-username=$cifs_user
-password=$cifs_passwd
-EOF
-
-# Configure scanner and service to accept scan initiated remotely on the scanner.
-# Scans initiated remotely are stored in /srv/brscan-skey/brscan, under user brscan-skey,
-# need to open port UDP 54925 on the firewall. To facilitate handling files in
+# Configure scanner so that this machine can accept scan initiated remotely on the scanner.
+# Scans initiated remotely are stored in /srv/brscan-skey/brscan, under user brscan-skey.
+# Need to open port UDP 54925 on the firewall. To facilitate handling files in
 # /srv/brscan-skey, we put the main user into brscan-skey group.
 ping -c 1 $brother_ip > /dev/null 2>&1
 if [ $? -eq 0 ]; then
@@ -50,12 +44,6 @@ else
    echo "Error: could not configure Brother scanner because it is unreachable"
 fi
 
-# Configure btrfs and snapper
-sudo btrfs filesystem label / ARCH
-sudo snapper -c root create-config /
-sudo snapper -c root set-config ALLOW_USERS="$USER" SYNC_ACL=yes
-sudo snapper -c root create --description "Fresh after install"
-
 # Restore backup to the home directory
 src_dir="/mnt/backup/$host.localdomain/daily.0/$USER"
 dst_dir="/home/$USER"
@@ -66,5 +54,15 @@ else
    echo "Could not access backup source dir"
    exit 1
 fi
+
+# Power off wifi for the desktop
+if [[ $machine == "desktop" ]]; then
+   iwctl device wlan0 set-property Powered off
+fi
+
+# Configure btrfs and snapper
+sudo btrfs filesystem label / ARCH
+sudo snapper -c root create-config /
+sudo snapper -c root create --description "Fresh after install"
 
 exit 0
