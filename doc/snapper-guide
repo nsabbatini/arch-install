@@ -1,0 +1,43 @@
+###################################################
+# BTRFS and snapper
+###################################################
+
+# View partitions and subvolumes
+lsblk -pf /dev/nvme0n1
+sudo btrfs subvolume list /
+
+# View filesystem
+sudo btrfs filesystem show /
+sudo btrfs filesystem usage /
+
+# View snapper configs
+sudo snapper list-configs
+snapper ls
+
+# Create single snapshot
+sudo snapper -c myconfig create --description "My first snapshot"
+
+# Create pre/post snapshot for a command
+sudo snapper -c myconfig create --command "curl ... | bash" --description "Dangerous remote command"
+
+# There is a custom script (/usr/local/bin/snp) to make pre/post snapshots easier. Example usage:
+sudo snp pacman -Syu
+sudo snp yay -Syu
+
+# Manually create pre/post snapshots. Annotare number from 'pre' creation and use on 'post'.
+sudo snapper -c myconfig create -t pre --description "Before major change"
+sudo snapper -c myconfig create -t post --pre-number N --description "After major changes"
+
+# For a full rollback (requires reboot)
+sudo snapper list
+sudo snapper rollback [snapshot_id]
+# Reboot to apply the rollback
+
+# To restore specific file or directory
+# Use 'snapper status' and 'snapper change' to identify the changes between the two pre/post snapshots
+sudo snapper status [PRE_snapshot_ID]..[POST_snapshot_ID]
+sudo snapper diff [PRE_snapshot_ID]..[POST_snapshot_ID]
+
+# Restore the changed files using the undochange command
+sudo snapper undochange [PRE_snapshot_ID]..[POST_snapshot_ID] [filename]
+# If filename is ommited, all changed files are restored.

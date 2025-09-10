@@ -10,13 +10,13 @@ echo ""
 # Before running this script, adjust parameters in file "parameters.sh"
 source /root/arch-install/bin/parameters.sh
 
-if [[ "$multilib" == "enabled" ]]; then
+if [[ "$machine" == "desktop" ]]; then
    echo "Enabling multilib packages"
    sed -Ei '/^#\[multilib\]/ {s/^#//; n; s/^#//}' /etc/pacman.conf
 fi
 
 echo "Running reflector..."
-reflector --country 'US,BR' --sort rate --fastest 5 --save /etc/pacman.d/mirrorlist
+reflector --country 'US,DE,BR' --sort rate --fastest 5 --latest 10 --age 12 --protocol https --ipv6 --save /etc/pacman.d/mirrorlist
 
 echo "Installing packages..."
 pacman -Syu
@@ -84,7 +84,7 @@ systemctl enable wait-for-ping
 systemctl enable snapper-timeline.timer
 systemctl enable snapper-cleanup.timer
 systemctl enable grub-btrfsd.service
-if [[ $gpu == "nvidia" ]]; then
+if [[ $machine == "desktop" ]]; then
    sudo systemctl enable nvidia-suspend.service
    sudo systemctl enable nvidia-hibernate.service
    sudo systemctl enable nvidia-resume.service

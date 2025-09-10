@@ -37,12 +37,11 @@ echo "Checking config parameters"
 [[ -z "$user" ]] && { echo "Error: variable user undefined"; exit 1; }
 [[ -z "$disk" ]] && { echo "Error: variable disk undefined"; exit 1; }
 [[ -z "$host" ]] && { echo "Error: variable host undefined"; exit 1; }
-[[ -z "$gpu" ]] && { echo "Error: variable gpu undefined"; exit 1; }
-[[ -z "$PL1" ]] && { echo "Error: variable PL1 undefined"; exit 1; }
-[[ -z "$PL2" ]] && { echo "Error: variable PL2 undefined"; exit 1; }
+[[ -z "$machine" ]] && { echo "Error: variable machine undefined"; exit 1; }
 [[ -z "$pkg_list" ]] && { echo "Error: variable pkg_list undefined"; exit 1; }
 [[ -z "$pkg_list_extra" ]] && { echo "Error: variable pkg_list_extra undefined"; exit 1; }
-[[ -z "$multilib" ]] && { echo "Error: variable multilib undefined"; exit 1; }
+[[ -z "$PL1" ]] && { echo "Error: variable PL1 undefined"; exit 1; }
+[[ -z "$PL2" ]] && { echo "Error: variable PL2 undefined"; exit 1; }
 
 if [[ $disk =~ .*sd[a-z] ]]; then
     partition1="${disk}1"
@@ -116,7 +115,7 @@ if [[ $skip_partition == "false" ]]; then
    mount -t vfat $partition1 /mnt/efi
 
    echo "Running reflector"
-   reflector --country 'US,BR' --sort rate --fastest 5 --save /etc/pacman.d/mirrorlist
+   reflector --country 'US,DE,BR' --sort rate --fastest 5 --latest 10 --age 12 --protocol https --ipv6 --save /etc/pacman.d/mirrorlist
 
 fi
 
@@ -142,6 +141,54 @@ cat << EOF > /mnt/etc/hosts
 ::1       localhost
 EOF
 
+echo "Creating network files"
+[[ $machine == "laptop" ]] && { br0_rqd_online="no"; }
+[[ $machine == "desktop" ]] && { br0_rqd_online="yes"; }
+
+cat << EOF > /mnt/systemd/network/25-br0.network
+[Match]
+Name=br0
+
+[Link]
+RequiredForOnline=$br0_rqd_online
+
+[Network]
+DHCP=yes
+IPv6AcceptRA=yes
+Domains=localdomain
+
+[DHCPv4]
+RouteMetric=20
+
+[IPv6AcceptRA]
+RouteMetric=20
+EOF
+
+if [[ $machine == "laptop" ]]; then
+cat << EOF > /mnt/systemd/network/25-wireless.network
+[Match]
+Name=wlan*
+
+[Link]
+RequiredForOnline=routable
+
+[Network]
+DHCP=yes
+IPv6AcceptRA=yes
+#IgnoreCarrierLoss=3s
+Domains=localdomain
+
+[DHCPv4]
+RouteMetric=40
+# The ethernet interface will have the normal hostname
+# The wifi interface will inform the dhcp server a different name
+Hostname=${host}w
+
+[IPv6AcceptRA]
+RouteMetric=40
+EOF
+fi
+
 echo "Enabling avahi to handle mdns instead of systemd-resolved"
 sed -Ei 's/^(hosts.*) (resolve.*)$/\1 mdns4_minimal [NOTFOUND=return] \2/g' /mnt/etc/nsswitch.conf
 [[ -d /mnt/etc/systemd/resolved.conf.d ]] || { mkdir -p /mnt/etc/systemd/resolved.conf.d; }
@@ -159,7 +206,7 @@ __GLX_VENDOR_LIBRARY_NAME=nvidia
 EOF
 }
 
-if [[ $gpu == "nvidia" ]]; then
+if [[ $machine == "desktop" ]]; then
     echo "Configuring NVIDIA"
     # Nvidia modules in mkinitcpio (early start) are required if the gui is started before the driver is loaded.
     # The problem is that early start of nvidia drivers will not be able to load saved video memory.

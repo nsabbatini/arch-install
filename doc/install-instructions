@@ -62,21 +62,69 @@ poweroff
 # Power-on, login as normal user
 # ###################################################################################
 
-# Run the post install scripts that was copied to /root by the install script.
-# Supply the username and password of the NAS server, and the IP address of the
-# Brother printer/scanner
+# Copy the post-install scripts that was copied to /root by the install script.
 sudo cp /root/arch-install/bin/arch-post-install.sh .
 sudo chown $USER: arch-post-install.sh
-./arch-post-install.sh <NAS-username> <NAS-password> <scanner-ip>
 
-# If backup was not successful see below how to create missing data
+# Choose the type of machine (assumed desktop has games and wifi is not used)
+#machine="desktop"
+machine="laptop"
+
+# Assume a Brother printer/scanner needs to be configured; git its IP address
+scanner_ip="192.168.1.244"
+
+# Run the post-install script, which will restore home directory backup. If backup was
+# not available or failed somehow, see below how to create some of the missing data.
+./arch-post-install.sh $machine $scanner_ip
+
 # We can now remove the post install file from the home directory
 rm arch-post-install.sh
+
+# The following command allows us to configure dark theme to gui applications that need elevated priviledges (sudo).
+# The resulting configurations are stored in the /root/.config directory
+sudo pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY KDE_SESSION_VERSION=6 KDE_FULL_SESSION=true dbus-launch systemsettings
+# Choose breeze dark for global theme, download catppuccin Frappe Flamingo color scheme and apply,
+# then change fonts to the same ones already being used.
+
+
+##################################################################################
+# Use Yubikey to provide passwordless acess to sudo, su
+##################################################################################
+
+# Passwordless 'sudo'
+sudo vim /etc/pam.d/sudo
+# Add before the other entries:
+   auth sufficient pam_u2f.so cue [cue_prompt=Tap YubiKey]
+
+# Passwordless 'su', 'su -' (uses the root account password)
+su -
+mkdir -p .config/Yubico
+pamu2fcfg > .config/Yubico/u2f_keys
+vim /etc/pam.d/su
+# Add before "auth required pam_unix.so"
+   auth sufficient pam_u2f.so cue [cue_prompt=Tap YubiKey]
+# Repeat for /etc/pam/su-l
+exit
+
+
+##################################################################################
+# Configure the Brother printer
+##################################################################################
+
+# Open CUPS (http:localhost:631) in a web browser
+#    Admin -> Add printer -> LPD/LPR
+#    Connection: lpd://192.168.1.244/binary-p1
+#    Name: brlaser, Description: DCP-B7520DW
+#    Maker/Manufacturer: Brother
+#    Click on "Brother" and select driver (not the driverless one)
 
 
 ##################################################################################
 # If not able to recover backup, the following can be recreated
 ##################################################################################
+
+# Instructions to configure the KDE Plasma desktop are provided in a separate file
+# (../doc/kde-plasma-configuration)
 
 # Create ssh keys and export it to other machines
 ssh-keygen -t rsa
@@ -87,10 +135,11 @@ sudo pacman -S pam-u2f
 mkdir ~/.config/Yubico
 pamu2fcfg > ~/.config/Yubico/u2f_keys
 
-# Config files to make applications use wayland
+# Config files to some applications
 cat << EOF > /home/$USER/.config/chrome-flags.conf
 --enable-features=UseOzonePlatform
 --ozone-platform=wayland
+--disable-features=GlobalShortcutsPortal
 EOF
 
 cat << EOF > /home/$USER/.config/electron-flags.conf
@@ -102,109 +151,3 @@ cat << EOF > /home/$USER/.config/spotify-flags.conf
 --enable-features=WaylandWindowDecorations
 --ozone-platform-hint=auto
 EOF
-
-# If KDE Plasma configurations could not be restored from backup,
-# instructions are provided in a separate file (../doc/kde-plasma-configuration)
-
-##################################################################################
-# End of restore instructions
-##################################################################################
-
-
-# The following will allow passwordless sudo using Yubico key
-sudo vim /etc/pam.d/sudo
-# Add before the other entries:
-   auth sufficient pam_u2f.so cue [cue_prompt=Tap YubiKey]
-
-# Allow passwordless for su (uses the root account password)
-su -
-cd /root
-mkdir ~/.config/Yubico
-pamu2fcfg > ~/.config/Yubico/u2f_keys
-vim /etc/pam.d/su
-# Add before "auth required pam_unix.so"
-   auth sufficient pam_u2f.so cue [cue_prompt=Tap YubiKey]
-# Repeat for /etc/pam/su-l
-exit
-
-# Setup printer in http:localhost:631
-#    Admin -> Add printer -> LPD/LPR
-#    Connection: lpd://192.168.1.244/binary-p1
-#    Name: brlaser, Description: DCP-B7520DW
-#    Maker/Manufacturer: Brother
-#    Click on "Brother" and select driver (not the driverless one)
-
-
-###################################################
-# BTRFS and snapper
-###################################################
-
-# View partitions and subvolumes
-lsblk -pf /dev/nvme0n1
-sudo btrfs subvolume list /
-
-# View filesystem
-sudo btrfs filesystem show /
-sudo btrfs filesystem usage /
-
-# View snapper configs
-sudo snapper list-configs
-snapper ls
-
-# Create single snapshot
-sudo snapper -c myconfig create --description "My first snapshot"
-
-# Create pre/post snapshot for a command
-sudo snapper -c myconfig create --command "curl ... | bash" --description "Dangerous remote command"
-
-# There is a custom script (/usr/local/bin/snp) to  make pre/post snapshots easier. Example usage:
-snp sudo pacman -Syu
-snp yay -Syu
-
-# Manually create pre/post snapshots. Annotare number from 'pre' creation and use on 'post'.
-sudo snapper -c myconfig create -t pre --description "Before major change"
-sudo snapper -c myconfig create -t post --pre-number N --description "After major changes"
-
-# For a full rollback (requires reboot)
-sudo snapper list
-sudo snapper rollback [snapshot_id]
-# Reboot to apply the rollback
- 
-# To restore specific file or directory
-# Use 'snapper status' and 'snapper change' to identify the changes between the two pre/post snapshots
-sudo snapper status [PRE_snapshot_ID]..[POST_snapshot_ID]
-sudo snapper diff [PRE_snapshot_ID]..[POST_snapshot_ID]
-
-# Restore the changed files using the undochange command
-sudo snapper undochange [PRE_snapshot_ID]..[POST_snapshot_ID] [filename]
-# If filename is ommited, all changed files are restored.
-
-
-
-###############################################################################################
-# Gaming tricks
-###############################################################################################
-
-# To find out the game steam id, run:
-~/bin/which-steam <substring-of-game-name>
-
-# To launch a MS Windows program for a steam game (e.g. mod manager) use the following command:
-protontricks-launch --appid <game-steam-id> /path/to/mswindows-program
-
-# To patch kotor 1/2 run:
-~/Games/kotor/KOTORModSync/KOTORModSync
-# For kotor2:
-# Click "Load Installation File" and choose my_toml_kotor2_instructions-kira.toml
-# Click "Set Directories and choose:
-#    Kotor location: ~/Games/steam/common/Knights of the Old Republic II/steamassets
-#    Mods location: ~/Games/kotor/kotor2_mods
-#    Select all mods by clicking to the left of "Available Mods" in the left pane
-#    Click "pre-Install Validation"; if errors occur, try to fix
-#    Click "Start Install"
-# Change to lower case with ~/bin/fix-kotor2 in folders (maybe not for kotor 1)
-for f in override/*; do test -f $f && mv "$f" "${f,,}"; done
-for f in modules/*; do test -f $f && mv "$f" "${f,,}"; done
-for f in movies/*; do test -f $f && mv "$f" "${f,,}"; done
-for f in streammusic/*; do test -f $f && mv "$f" "${f,,}"; done
-for f in streamvoice/*; do test -f $f && mv "$f" "${f,,}"; done
-for f in streamsounds/*; do test -f $f && mv "$f" "${f,,}"; done

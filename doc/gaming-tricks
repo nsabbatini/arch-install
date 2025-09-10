@@ -1,0 +1,40 @@
+###############################################################################################
+# Gaming tricks
+###############################################################################################
+
+# To find out the game steam id, run:
+~/bin/which-steam <substring-of-game-name>
+
+# To launch a MS Windows program for a steam game (e.g. mod manager) use the following command:
+protontricks-launch --appid <game-steam-id> /path/to/mswindows-program
+
+# To install mods in kotor 1/2 run:
+~/Games/kotor/KOTORModSync/KOTORModSync
+
+# For kotor1:
+# Click "Load Installation File" and choose my_toml_kotor1_instructions.toml
+# Click "Set Directories" and choose:
+#    Kotor location: ~/Games/steam/common/swkotor
+#    Mods location: ~/Games/kotor/kotor1_mods
+#    Select all mods by clicking to the left of "Available Mods" in the left pane
+#    Click "pre-Install Validation"; if errors occur, try to fix
+#    Click "Start Install"
+# There are also two other mods, one for ultrawide screen and another for font size.
+# The instructions provided in the folders of these mods are enough.
+
+# For kotor2:
+# Click "Load Installation File" and choose my_toml_kotor2_instructions-kira.toml
+# Click "Set Directories" and choose:
+#    Kotor location: ~/Games/steam/common/Knights of the Old Republic II/steamassets
+#    Mods location: ~/Games/kotor/kotor2_mods
+#    Select all mods by clicking to the left of "Available Mods" in the left pane
+#    Click "pre-Install Validation"; if errors occur, try to fix
+#    Click "Start Install"
+# Change file names to lower case (maybe not for kotor 1)
+for f in "override/*"; do test -f $f && mv "$f" "${f,,}"; done
+for f in "modules/*"; do test -f $f && mv "$f" "${f,,}"; done
+for f in "movies/*"; do test -f $f && mv "$f" "${f,,}"; done
+for f in "streammusic/*"; do test -f $f && mv "$f" "${f,,}"; done
+for f in "streamvoice/*"; do test -f $f && mv "$f" "${f,,}"; done
+for f in "streamsounds/*"; do test -f $f && mv "$f" "${f,,}"; done
+
