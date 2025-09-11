@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Runs a command wrapped in btrfs snapper pre-post snapshots
-# Usage: $ snp <commands>
-# e.g.: $ snp sudo pacman -Syu
+# Usage: $ sudo snp <commands>
+# e.g.: $ sudo snp pacman -Syu
 
 [[ $EUID -eq 0 ]] || { echo "Put sudo before snp"; exit 1; }
 
@@ -23,8 +23,8 @@ snapshot_nbr=$(snapper create --type=pre --cleanup-algorithm=number --print-numb
 echo "New pre snapshot with number ${snapshot_nbr}"
 echo "Running command \"${arg}\""
 
-[[ "$arg" =~ ^pacman.* ]] && { cmd="${arg}"; }
-[[ "$arg" =~ ^yay.* ]] && { cmd="sudo -u narcizo ${arg}"; }
+[[ "$arg" =~ ^pacman.* ]] && { cmd="stdbuf -oL -eL ${arg}"; }
+[[ "$arg" =~ ^yay.* ]] && { cmd="sudo -u narcizo stdbuf -oL -eL ${arg}"; }
 eval "$cmd"
 
 snapshot_nbr=$(snapper create --type=post --cleanup-algorithm=number --print-number --pre-number="${snapshot_nbr}")
