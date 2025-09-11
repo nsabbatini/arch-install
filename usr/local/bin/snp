@@ -17,17 +17,17 @@ arg="$@"
 
 echo "Logging to: ${log_file}"
 
-{
-   snapshot_nbr=$(snapper create --type=pre --cleanup-algorithm=number --print-number --description="${arg}")
-   echo "New pre snapshot with number ${snapshot_nbr}"
-   echo "Running command \"${arg}\""
+exec &> >(tee -a ${log_file})
 
-   [[ "$arg" =~ ^pacman.* ]] && { cmd="${arg}"; }
-   [[ "$arg" =~ ^yay.* ]] && { cmd="sudo -u narcizo ${arg}"; }
-   eval "$cmd"
+snapshot_nbr=$(snapper create --type=pre --cleanup-algorithm=number --print-number --description="${arg}")
+echo "New pre snapshot with number ${snapshot_nbr}"
+echo "Running command \"${arg}\""
 
-   snapshot_nbr=$(snapper create --type=post --cleanup-algorithm=number --print-number --pre-number="${snapshot_nbr}")
-   echo -e "\nNew post snapshot with number ${snapshot_nbr}\n"
-} | tee $log_file
+[[ "$arg" =~ ^pacman.* ]] && { cmd="${arg}"; }
+[[ "$arg" =~ ^yay.* ]] && { cmd="sudo -u narcizo ${arg}"; }
+eval "$cmd"
+
+snapshot_nbr=$(snapper create --type=post --cleanup-algorithm=number --print-number --pre-number="${snapshot_nbr}")
+echo -e "\nNew post snapshot with number ${snapshot_nbr}\n"
 
 exit 0
