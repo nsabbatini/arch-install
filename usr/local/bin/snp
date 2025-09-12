@@ -13,7 +13,7 @@ log_file="${log_path}/snp_${date}.log"
 [ -d ${log_path} ] || { mkdir -p ${log_path}; }
 
 arg="$@"
-[[ "${arg}" =~ ^sudo.* ]] && { echo "Don't put sudo before pacman/yay"; exit 1; }
+[[ "${arg}" =~ ^sudo.* ]] && { echo "Command after snp does not need sudo"; exit 1; }
 
 echo "Logging to: ${log_file}"
 
@@ -23,8 +23,12 @@ snapshot_nbr=$(snapper create --type=pre --cleanup-algorithm=number --print-numb
 echo "New pre snapshot with number ${snapshot_nbr}"
 echo "Running command \"${arg}\""
 
-[[ "$arg" =~ ^pacman.* ]] && { cmd="stdbuf -oL -eL ${arg}"; }
-[[ "$arg" =~ ^yay.* ]] && { cmd="sudo -u narcizo stdbuf -oL -eL ${arg}"; }
+if [[ "$arg" =~ ^yay.* ]]; then
+    cmd="sudo -u narcizo stdbuf -oL -eL ${arg}"
+else
+    cmd="stdbuf -oL -eL ${arg}"
+fi
+
 eval "$cmd"
 
 snapshot_nbr=$(snapper create --type=post --cleanup-algorithm=number --print-number --pre-number="${snapshot_nbr}")
