@@ -32,7 +32,7 @@ util-linux
 xdg-utils
 pam-u2f
 
-# Dev tools
+# Tools
 vim
 git
 rsync
@@ -41,6 +41,7 @@ wget
 htop
 fastfetch
 tmux
+unrar
 
 # Filesystem utils
 mtools

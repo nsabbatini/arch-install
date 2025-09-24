@@ -4,7 +4,7 @@
 # Usage: $ sudo snp <commands>
 # e.g.: $ sudo snp pacman -Syu
 
-[[ $EUID -eq 0 ]] || { echo "Put sudo before snp"; exit 1; }
+[[ $EUID -eq 0 ]] || { echo "Need to run snp with sudo"; exit 1; }
 
 log_path="/var/log/snp"
 date=$(date "+%Y-%m-%d-%H%M%S")
@@ -15,14 +15,48 @@ log_file="${log_path}/snp_${date}.log"
 arg="$@"
 [[ "${arg}" =~ ^sudo.* ]] && { echo "Command after snp does not need sudo"; exit 1; }
 
-echo "Logging to: ${log_file}"
+wait_grub_btrfsd() {
+    N=$1
+    i=0
+    printf "Wait ${N}s "
+    while [[ $i -lt $N ]]; do
+        printf "."
+        sleep 1
+        ((i++))
+    done
+    printf "\n"
+}
 
+echo "Logging to: ${log_file}"
 exec &> >(tee -a ${log_file})
 
+# Before doing manual spapshots, we need to wait any running snapper-timeline to finish and then stop the service
+i=0
+while systemctl is-active --quiet snapper-timeline.service; do
+    if [[ $i -eq 0 ]]; then
+        printf "Service snapper-timeline is active, wait for it to finish "
+    elif [[ $i -lt 10 ]]; then
+        printf "."
+    else
+        printf "\nsnapper-timeline taking to long to finish, aborting\n"
+        exit 1
+    fi
+    ((++i))
+    sleep 1
+done
+
+systemctl stop snapper-timeline.timer
+
+# grub-btrfsd takes about 8s to conclude. It might still be running, so give it some time.
+wait_grub_btrfsd 10
+
+# Now that automatic snapshots are stopped, we can proceed with the manual snapshots
 snapshot_nbr=$(snapper create --type=pre --cleanup-algorithm=number --print-number --description="${arg}")
+
 echo "New pre snapshot with number ${snapshot_nbr}"
 echo "Running command \"${arg}\""
 
+# yay needs to run as normal user, so we use sudo to do it
 if [[ "$arg" =~ ^yay.* ]]; then
     cmd="sudo -u narcizo stdbuf -oL -eL ${arg}"
 else
@@ -33,5 +67,9 @@ eval "$cmd"
 
 snapshot_nbr=$(snapper create --type=post --cleanup-algorithm=number --print-number --pre-number="${snapshot_nbr}")
 echo -e "\nNew post snapshot with number ${snapshot_nbr}\n"
+
+# Give some time to grub-btrfsd to finish and then restart the snapper-timeline service
+wait_grub_btrfsd 10
+systemctl start snapper-timeline.timer
 
 exit 0

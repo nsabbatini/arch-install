@@ -6,7 +6,12 @@
 ~/bin/which-steam <substring-of-game-name>
 
 # To launch a MS Windows program for a steam game (e.g. mod manager) use the following command:
+export PROTON_VERSION="Proton Experimental"
 protontricks-launch --appid <game-steam-id> /path/to/mswindows-program
+
+########################################################################
+# Kotor
+#######################################################################\
 
 # To install mods in kotor 1/2 run:
 ~/Games/kotor/KOTORModSync/KOTORModSync
@@ -38,3 +43,15 @@ for f in "streammusic/*"; do test -f $f && mv "$f" "${f,,}"; done
 for f in "streamvoice/*"; do test -f $f && mv "$f" "${f,,}"; done
 for f in "streamsounds/*"; do test -f $f && mv "$f" "${f,,}"; done
 
+########################################################################
+# Install mods to Mass Effect Legendary Edition
+#######################################################################\
+
+# Install Mass Effect Legendary Edition and run it at least once to create the Proton prefix.
+# Download the ME3Tweaks Mod Manager for Windows, and use Ark to decompress it.
+
+# Find the game's Steam ID (which is 1328670)
+which-steam Mass
+
+# Run the mod manager (the fonts are small, but every attempt to increase affected the game)
+PROTON_VERSION="Proton Experimental" protontricks-launch --appid 1328670 ~/Games/MassEffect/ME3TweaksModManager.exe
