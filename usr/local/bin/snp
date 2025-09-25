@@ -52,11 +52,11 @@ wait_grub_btrfsd 10
 
 # Now that automatic snapshots are stopped, we can proceed with the manual snapshots
 snapshot_nbr=$(snapper create --type=pre --cleanup-algorithm=number --print-number --description="${arg}")
-
+wait_grub_btrfsd 10
 echo "New pre snapshot with number ${snapshot_nbr}"
-echo "Running command \"${arg}\""
 
 # yay needs to run as normal user, so we use sudo to do it
+echo "Running command \"${arg}\""
 if [[ "$arg" =~ ^yay.* ]]; then
     cmd="sudo -u narcizo stdbuf -oL -eL ${arg}"
 else
@@ -66,10 +66,10 @@ fi
 eval "$cmd"
 
 snapshot_nbr=$(snapper create --type=post --cleanup-algorithm=number --print-number --pre-number="${snapshot_nbr}")
+wait_grub_btrfsd 10
 echo -e "\nNew post snapshot with number ${snapshot_nbr}\n"
 
-# Give some time to grub-btrfsd to finish and then restart the snapper-timeline service
-wait_grub_btrfsd 10
+# Restart the snapper-timeline service
 systemctl start snapper-timeline.timer
 
 exit 0
