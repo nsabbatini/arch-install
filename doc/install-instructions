@@ -120,6 +120,18 @@ exit
 
 
 ##################################################################################
+# Configure grub
+##################################################################################
+
+# If the grub fonts are too small, edit /etc/default/grub and change the following:
+#GRUB_GFXMODE=auto
+GRUB_GFXMODE=1024x768
+
+# Then run:
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+
+##################################################################################
 # If not able to recover backup, the following can be recreated
 ##################################################################################
 
