@@ -1,0 +1,12 @@
+[Unit]
+Description="Calls service for snapshot utility once a day"
+
+[Timer]
+Persistent=false
+OnCalendar=*-*-* 5:00:00
+WakeSystem=true
+RandomizedDelaySec=120
+Unit=snapshot-daily.service
+
+[Install]
+WantedBy=timers.target
