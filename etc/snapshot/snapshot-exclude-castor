@@ -1,0 +1,17 @@
++ .bashrc
++ .bash_logout
++ .bash_profile
++ .cloudflared/
++ .config/
++ .gitconfig
++ .local/
++ .ssh/
++ .var/
++ .vim/
++ .vimrc
+- aur/
+- Vaults/
+- .config/google-chrome/
+- .local/share/baloo/
+- .local/share/Trash/
+- .*

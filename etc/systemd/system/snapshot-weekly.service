@@ -1,0 +1,6 @@
+[Unit]
+Description="Weekly rotating-snapshot utility"
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/snapshot-weekly

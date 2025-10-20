@@ -1,0 +1,12 @@
+[Unit]
+Description="Calls service for snapshot utility once a month"
+
+[Timer]
+Persistent=true
+OnCalendar=Sat *-*-1..7 03:00:00
+WakeSystem=true
+RandomizedDelaySec=300
+Unit=snapshot-monthly.service
+
+[Install]
+WantedBy=timers.target

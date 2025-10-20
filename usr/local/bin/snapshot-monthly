@@ -1,0 +1,54 @@
+#!/bin/bash
+# ----------------------------------------------------------------------
+# Rotating-filesystem-snapshot utility
+# ----------------------------------------------------------------------
+# Makes monthly snapshots, keeping 6 rotating copies. The most recent
+# snapshot is copied with hard links from the oldest weekly snapshot,
+# therefore this script will not work without the snapshot-weekly script.
+# ----------------------------------------------------------------------
+
+PATH="/usr/local/bin:/usr/bin:/usr/sbin"
+
+# Logs to systemd journal
+Say(){
+    echo $1 | systemd-cat -t snapshot-monthly -p $2
+}
+
+[[ $EUID -eq 0 ]] || { Say "Need to run as root" "err"; exit 1; }
+
+host=$(hostname)
+
+# $nfs_dest is a locally mounted NFS share, pointing to the NAS backup location
+nfs_dest="/mnt/backup/${host}"
+
+# Check if the NFS share is mounted or can be dynamically automounted by systemd
+echo "Latest monthly snapshot: $(date)" >> $nfs_dest/.snapshot_montly 2>/dev/null
+[[ $? -eq 0 ]] || { Say "could not write to $nfs_dest" "err"; exit 1; }
+
+# If the snapshot destination is automounted with systemd, this will keep it mounted
+cd $nfs_dest
+
+if [[ -d $nfs_dest/weekly.3 ]]; then
+   Say "creating montly snapshot of $host" "info"
+
+   # step 1: delete the oldest snapshot, if it exists:
+   [[ -d $nfs_dest/monthly.5 ]] && { rm -rf $nfs_dest/monthly.5; }
+
+   # step 2: shift the middle snapshots(s) back by one, if they exist
+   [[ -d $nfs_dest/monthly.4 ]] && { mv $nfs_dest/monthly.4 $nfs_dest/monthly.5; }
+   [[ -d $nfs_dest/monthly.3 ]] && { mv $nfs_dest/monthly.3 $nfs_dest/monthly.4; }
+   [[ -d $nfs_dest/monthly.2 ]] && { mv $nfs_dest/monthly.2 $nfs_dest/monthly.3; }
+   [[ -d $nfs_dest/monthly.1 ]] && { mv $nfs_dest/monthly.1 $nfs_dest/monthly.2; }
+   [[ -d $nfs_dest/monthly.0 ]] && { mv $nfs_dest/monthly.0 $nfs_dest/monthly.1; }
+
+   # step 3: make a hard-link-only (except for dirs) copy of weekly.3 into monthly.0
+   [[ -d $nfs_dest/weekly.3 ]] && { cp -al $nfs_dest/weekly.3 $nfs_dest/monthly.0; }
+
+   # note: do not update the mtime of monthly.0; it will reflect the time when weekly.3
+   # was made, which should be correct
+   Say "finished monthly snapshot of $host" "info"
+else
+   Say "$nfs_dest/weekly.3 does not exist, no need for montly snapshot" "warning"
+fi
+
+exit 0

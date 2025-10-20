@@ -69,7 +69,7 @@ ls $nfs_dest > /dev/null 2>&1
 # drive and prevent it from being unounted while the script is running
 cd $nfs_dest
 
-Say "creating snapshots of $host" "info"
+Say "creating daily snapshot of $host" "info"
 
 # step 1: delete the oldest snapshot, if it exists:
 [[ -d ${nfs_dest}/daily.6 ]] && { rm -rf ${nfs_dest}/daily.6; }
