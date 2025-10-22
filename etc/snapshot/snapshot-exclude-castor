@@ -5,6 +5,7 @@
 + .config/
 + .gitconfig
 + .local/
++ .local/share/Steam/steamapps/
 + .ssh/
 + .var/
 + .vim/
@@ -13,5 +14,7 @@
 - Vaults/
 - .config/google-chrome/
 - .local/share/baloo/
+- .local/share/Steam/steamapps/shadercache/
+- .local/share/Steam/*
 - .local/share/Trash/
 - .*

@@ -4,3 +4,5 @@ Description="Monthly rotating-snapshot utility"
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/snapshot-monthly
+Restart=on-failure
+RestartSec=60

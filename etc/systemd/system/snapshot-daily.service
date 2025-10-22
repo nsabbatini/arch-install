@@ -4,3 +4,5 @@ Description="Daily rotating-snapshot utility"
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/snapshot-daily
+Restart=on-failure
+RestartSec=60

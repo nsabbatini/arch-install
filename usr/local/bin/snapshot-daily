@@ -32,7 +32,8 @@ ssh_opt="-F /home/$user/.ssh/config -i /home/$user/.ssh/id_rsa"
 src="/home/${user}"
 
 # NAS server where backup wil be stored
-nas="elefante.localdomain"
+#nas="elefante.localdomain"
+nas="192.168.1.104"
 
 # $nas_dest is the backup destination directory on the NAS server
 dest_dir="/share/linux-backup/${host}"
@@ -95,6 +96,6 @@ rsync -e "ssh $ssh_opt" $rsync_opt $src ${nas_dest}/daily.0
 
 # step 5: update the mtime of daily.0 to reflect the snapshot time
 touch ${nfs_dest}/daily.0
-Say "finished $host backup" "info"
+Say "finished $host daily snapshot" "info"
 
 cleanup_exit 0
