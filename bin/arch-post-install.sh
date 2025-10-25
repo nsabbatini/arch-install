@@ -63,6 +63,7 @@ fi
 # Configure btrfs and snapper
 sudo btrfs filesystem label / ARCH
 sudo snapper -c root create-config /
+sudo snapper -c home create-config /home
 sudo snapper -c root create --description "Fresh after install"
 
 exit 0
