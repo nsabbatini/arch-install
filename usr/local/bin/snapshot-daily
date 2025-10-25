@@ -24,16 +24,13 @@ exit $1
 
 user="narcizo"
 host=$(hostname)
+nas="192.168.1.104"
 
 # This script is run under root, but we will make rsync use ssh config and keys from $user
 ssh_opt="-F /home/$user/.ssh/config -i /home/$user/.ssh/id_rsa"
 
 # Backup source directory
 src="/home/${user}"
-
-# NAS server where backup wil be stored
-#nas="elefante.localdomain"
-nas="192.168.1.104"
 
 # $nas_dest is the backup destination directory on the NAS server
 dest_dir="/share/linux-backup/${host}"
@@ -48,6 +45,12 @@ exc="/etc/snapshot/snapshot-exclude-${host}"
 [[ -f $exc ]] || { Say "/etc/snapshot/snapshot-exclude-${host} does not exist"; cleanup_exit 1; }
 
 # Check if we can reach the NAS
+for i in {1..10}; do
+   ping -c 1 -W 1 $nas &> /dev/null
+   [[ $? -eq 0 ]] && { break; }
+   sleep 2
+done
+
 ping -c 1 -W 1 $nas &> /dev/null
 [[ $? -eq 0 ]] || { Say "ping to NAS failed" "err"; cleanup_exit 1; }
 
