@@ -42,9 +42,9 @@ nfs_dest="${nfs}/${host}"
 exc="/etc/snapshot/snapshot-exclude-${host}"
 [[ -f $exc ]] || { Say "/etc/snapshot/snapshot-exclude-${host} does not exist" "err"; cleanup_exit 1; }
 
-# Check if we can reach the NAS
+# Check if network is up and we can reach the NAS
 nas_ping=0
-for i in {1..10}; do
+for i in {1..30}; do
    ping -c 1 -W 1 $nas &> /dev/null
    [[ $? -eq 0 ]] && { nas_ping=1; break; }
    sleep 2

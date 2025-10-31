@@ -1,6 +1,8 @@
 [Unit]
 Description="Daily rotating-snapshot utility"
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/snapshot-daily
+ExecStart=/bin/systemd-inhibit --what=idle:sleep:shutdown --why="snapshot-daily is running" /usr/local/bin/snapshot-daily
