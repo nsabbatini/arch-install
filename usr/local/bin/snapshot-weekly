@@ -17,6 +17,7 @@ Say(){
 [[ $EUID -eq 0 ]] || { Say "Need to run as root" "err"; exit 1; }
 
 host=$(hostname)
+nas="192.168.1.104"
 
 # $nfs_dest is a locally mounted NFS share, pointing to the NAS backup location
 nfs_dest="/mnt/backup/${host}"
