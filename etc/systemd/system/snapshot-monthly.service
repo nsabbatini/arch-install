@@ -1,7 +1,7 @@
 [Unit]
 Description="Monthly rotating-snapshot utility"
 Wants=network-online.target
-After=network-online.target
+After=network-online.target systemd-suspend.service
 
 [Service]
 Type=oneshot
