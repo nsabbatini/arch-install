@@ -55,23 +55,23 @@ chown 1000:1000 $stamp
 
 # Check if destination directory on NAS exists, and create one if not
 ssh $ssh_opt $ssh_dest "[[ -d $nas_dir ]] || { mkdir ${nas_dir}; chown 1000:1000 ${nas_dir}; }"
-rsync -a -e "ssh $ssh_opt" --numeric-ids $stamp ${rsync_dest}/.snapshot_daily 2>/dev/null
+rsync -e "ssh $ssh_opt" -a --numeric-ids --rsync-path='sudo rsync' $stamp ${rsync_dest}/.snapshot_daily 2>/dev/null
 [[ $? -eq 0 ]] || { Say "could not write to the NAS destination directory" "err"; cleanup_exit 1; }
 
 Say "creating daily snapshot of $host" "info"
 
 # step 1: delete the oldest snapshot, if it exists:
-ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.6 ]] && { rm -rf ${nas_dir}/daily.6; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.6 ]] && { sudo rm -rf ${nas_dir}/daily.6; }"
 
 # step 2: shift the middle snapshots(s) back by one, if they exist
-ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.5 ]] && { mv ${nas_dir}/daily.5 ${nas_dir}/daily.6; }"
-ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.4 ]] && { mv ${nas_dir}/daily.4 ${nas_dir}/daily.5; }"
-ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.3 ]] && { mv ${nas_dir}/daily.3 ${nas_dir}/daily.4; }"
-ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.2 ]] && { mv ${nas_dir}/daily.2 ${nas_dir}/daily.3; }"
-ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.1 ]] && { mv ${nas_dir}/daily.1 ${nas_dir}/daily.2; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.5 ]] && { sudo mv ${nas_dir}/daily.5 ${nas_dir}/daily.6; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.4 ]] && { sudo mv ${nas_dir}/daily.4 ${nas_dir}/daily.5; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.3 ]] && { sudo mv ${nas_dir}/daily.3 ${nas_dir}/daily.4; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.2 ]] && { sudo mv ${nas_dir}/daily.2 ${nas_dir}/daily.3; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.1 ]] && { sudo mv ${nas_dir}/daily.1 ${nas_dir}/daily.2; }"
 
 # step 3: make a hard-link-only (except for dirs) copy of the latest snapshot, if that exists
-ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.0 ]] && { cp -al ${nas_dir}/daily.0 ${nas_dir}/daily.1; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.0 ]] && { sudo cp -al ${nas_dir}/daily.0 ${nas_dir}/daily.1; }"
 
 # step 4: create a snapper snapshot to use as source; this guarantees data consistency;
 # then rsync from the source into the latest snapshot (notice that rsync behaves
@@ -81,7 +81,7 @@ ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/daily.0 ]] || { mkdir ${nas_dir}/daily.0;
 snp=$(snapper -c home create --type=single --cleanup-algorithm=number --print-number --description="backup")
 src="/home/.snapshots/$snp/snapshot/${user}"
 rsync_opt="-a --delete --delete-excluded --stats --exclude-from=$exc --numeric-ids"
-rsync -e "ssh $ssh_opt" $rsync_opt $src ${rsync_dest}/daily.0
+rsync -e "ssh $ssh_opt" $rsync_opt --rsync-path='sudo rsync' $src ${rsync_dest}/daily.0
 
 # step 5: update the mtime of daily.0 to reflect the snapshot time
 ssh $ssh_opt $ssh_dest "touch ${nas_dir}/daily.0"

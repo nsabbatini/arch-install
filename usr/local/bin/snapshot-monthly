@@ -51,23 +51,23 @@ echo "Latest montly snapshot: $(date)" > $stamp
 chown 1000:1000 $stamp
 
 # Check that we can write to the NAS
-rsync -a -e "ssh $ssh_opt" --numeric-ids $stamp ${rsync_dest}/.snapshot_montly 2>/dev/null
+rsync -a -e "ssh $ssh_opt" --numeric-ids --rsync-path='sudo rsync' $stamp ${rsync_dest}/.snapshot_montly 2>/dev/null
 [[ $? -eq 0 ]] || { Say "could not write to the NAS" "err"; cleanup_exit 1; }
 
 Say "creating montly snapshot of $host" "info"
 
 # step 1: delete the oldest snapshot, if it exists:
-ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.5 ]] && { rm -rf $nas_dir/monthly.5; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.5 ]] && { sudo rm -rf $nas_dir/monthly.5; }"
 
 # step 2: shift the middle snapshots(s) back by one, if they exist
-ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.4 ]] && { mv $nas_dir/monthly.4 $nas_dir/monthly.5; }"
-ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.3 ]] && { mv $nas_dir/monthly.3 $nas_dir/monthly.4; }"
-ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.2 ]] && { mv $nas_dir/monthly.2 $nas_dir/monthly.3; }"
-ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.1 ]] && { mv $nas_dir/monthly.1 $nas_dir/monthly.2; }"
-ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.0 ]] && { mv $nas_dir/monthly.0 $nas_dir/monthly.1; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.4 ]] && { sudo mv $nas_dir/monthly.4 $nas_dir/monthly.5; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.3 ]] && { sudo mv $nas_dir/monthly.3 $nas_dir/monthly.4; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.2 ]] && { sudo mv $nas_dir/monthly.2 $nas_dir/monthly.3; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.1 ]] && { sudo mv $nas_dir/monthly.1 $nas_dir/monthly.2; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.0 ]] && { sudo mv $nas_dir/monthly.0 $nas_dir/monthly.1; }"
 
 # step 3: make a hard-link-only (except for dirs) copy of weekly.3 into monthly.0
-ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/weekly.3 ]] && { cp -al $nas_dir/weekly.3 $nas_dir/monthly.0; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/weekly.3 ]] && { sudo cp -al $nas_dir/weekly.3 $nas_dir/monthly.0; }"
 
 # note: do not update the mtime of montly.0; it will reflect the creation time of weekly.3
 Say "finished montly snapshot of $host" "info"
