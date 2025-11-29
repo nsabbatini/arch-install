@@ -14,52 +14,62 @@ Say(){
     echo $1 | systemd-cat -t snapshot-monthly -p $2
 }
 
+# Remove temp files
+cleanup_exit() {
+[[ -f $stamp ]] && { rm $stamp; }
+exit $1
+}
+
 [[ $EUID -eq 0 ]] || { Say "Need to run as root" "err"; exit 1; }
 
+user="narcizo"
 host=$(hostname)
-nas="192.168.1.104"
+nas_ip="192.168.1.104"
 
-# $nfs_dest is a locally mounted NFS share, pointing to the NAS backup location
-nfs_dest="/mnt/backup/${host}"
+# This script is run under root, but we will make rsync use ssh config and keys from $user
+ssh_opt="-F /home/$user/.ssh/config -i /home/$user/.ssh/id_rsa"
+
+# nas_dir is the backup destination directory on the NAS server
+nas_dir="/share/linux-backup/${host}"
+ssh_dest="${user}@${nas_ip}"
+rsync_dest="${ssh_dest}:${nas_dir}"
 
 # Check if network is up and we can reach the NAS
 nas_ping=0
 for i in {1..30}; do
-   ping -c 1 -W 1 $nas &> /dev/null
+   ping -c 1 -W 1 $nas_ip &> /dev/null
    [[ $? -eq 0 ]] && { nas_ping=1; break; }
    sleep 2
 done
-
 [[ $nas_ping -eq 1 ]] || { Say "ping to NAS failed" "err"; exit 1; }
 
-# Check if the NFS share is mounted or can be dynamically automounted by systemd
-echo "Latest monthly snapshot: $(date)" >> $nfs_dest/.snapshot_montly 2>/dev/null
-[[ $? -eq 0 ]] || { Say "could not write to $nfs_dest" "err"; exit 1; }
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/weekly.3 ]]" || { Say "weekly.3 not found, skipping snapshot" "info"; exit 0; }
 
-# If the snapshot destination is automounted with systemd, this will keep it mounted
-cd $nfs_dest
+# Create temporaty stamp file and give it normal user permissions
+stamp=/tmp/snapshot_stamp$$
+echo "Latest montly snapshot: $(date)" > $stamp
+chown 1000:1000 $stamp
 
-if [[ -d $nfs_dest/weekly.3 ]]; then
-   Say "creating montly snapshot of $host" "info"
+# Check that we can write to the NAS
+rsync -a -e "ssh $ssh_opt" --numeric-ids $stamp ${rsync_dest}/.snapshot_montly 2>/dev/null
+[[ $? -eq 0 ]] || { Say "could not write to the NAS" "err"; cleanup_exit 1; }
 
-   # step 1: delete the oldest snapshot, if it exists:
-   [[ -d $nfs_dest/monthly.5 ]] && { rm -rf $nfs_dest/monthly.5; }
+Say "creating montly snapshot of $host" "info"
 
-   # step 2: shift the middle snapshots(s) back by one, if they exist
-   [[ -d $nfs_dest/monthly.4 ]] && { mv $nfs_dest/monthly.4 $nfs_dest/monthly.5; }
-   [[ -d $nfs_dest/monthly.3 ]] && { mv $nfs_dest/monthly.3 $nfs_dest/monthly.4; }
-   [[ -d $nfs_dest/monthly.2 ]] && { mv $nfs_dest/monthly.2 $nfs_dest/monthly.3; }
-   [[ -d $nfs_dest/monthly.1 ]] && { mv $nfs_dest/monthly.1 $nfs_dest/monthly.2; }
-   [[ -d $nfs_dest/monthly.0 ]] && { mv $nfs_dest/monthly.0 $nfs_dest/monthly.1; }
+# step 1: delete the oldest snapshot, if it exists:
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.5 ]] && { rm -rf $nas_dir/monthly.5; }"
 
-   # step 3: make a hard-link-only (except for dirs) copy of weekly.3 into monthly.0
-   [[ -d $nfs_dest/weekly.3 ]] && { cp -al $nfs_dest/weekly.3 $nfs_dest/monthly.0; }
+# step 2: shift the middle snapshots(s) back by one, if they exist
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.4 ]] && { mv $nas_dir/monthly.4 $nas_dir/monthly.5; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.3 ]] && { mv $nas_dir/monthly.3 $nas_dir/monthly.4; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.2 ]] && { mv $nas_dir/monthly.2 $nas_dir/monthly.3; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.1 ]] && { mv $nas_dir/monthly.1 $nas_dir/monthly.2; }"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/monthly.0 ]] && { mv $nas_dir/monthly.0 $nas_dir/monthly.1; }"
 
-   # note: do not update the mtime of monthly.0; it will reflect the time when weekly.3
-   # was made, which should be correct
-   Say "finished monthly snapshot of $host" "info"
-else
-   Say "$nfs_dest/weekly.3 does not exist, no need for montly snapshot" "warning"
-fi
+# step 3: make a hard-link-only (except for dirs) copy of weekly.3 into monthly.0
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/weekly.3 ]] && { cp -al $nas_dir/weekly.3 $nas_dir/monthly.0; }"
 
-exit 0
+# note: do not update the mtime of montly.0; it will reflect the creation time of weekly.3
+Say "finished montly snapshot of $host" "info"
+
+cleanup_exit 0

@@ -24,18 +24,15 @@ exit $1
 
 user="narcizo"
 host=$(hostname)
-nas="192.168.1.104"
+nas_ip="192.168.1.104"
 
 # This script is run under root, but we will make rsync use ssh config and keys from $user
 ssh_opt="-F /home/$user/.ssh/config -i /home/$user/.ssh/id_rsa"
 
-# $nas_dest is the backup destination directory on the NAS server
-dest_dir="/share/linux-backup/${host}"
-nas_dest="${user}@${nas}:${dest_dir}"
-
-# $nfs_dest points to the same $nas_dest location above, but mounted locally as NFS share
-nfs="/mnt/backup"
-nfs_dest="${nfs}/${host}"
+# nas_dir is the backup destination directory on the NAS server
+nas_dir="/share/linux-backup/${host}"
+ssh_dest="${user}@${nas_ip}"
+rsync_dest="${ssh_dest}:${nas_dir}"
 
 # /etc/snapshot contains a file with paths to be excluded from the snapshot
 # We require that this file exists, even if empty
@@ -45,61 +42,49 @@ exc="/etc/snapshot/snapshot-exclude-${host}"
 # Check if network is up and we can reach the NAS
 nas_ping=0
 for i in {1..30}; do
-   ping -c 1 -W 1 $nas &> /dev/null
+   ping -c 1 -W 1 $nas_ip &> /dev/null
    [[ $? -eq 0 ]] && { nas_ping=1; break; }
    sleep 2
 done
-
 [[ $nas_ping -eq 1 ]] || { Say "ping to NAS failed" "err"; cleanup_exit 1; }
-
-# Check if the NFS share is mounted or can be dynamically automounted by systemd
-ls $nfs > /dev/null 2>&1
-[[ $? -eq 0 ]] || { Say "could not read $nfs" "err"; cleanup_exit 1; }
-
-# If the NFS share is automounted with systemd, the following will make it mount the
-# drive and prevent it from being unounted while the script is running
-cd $nfs
 
 # Create temporaty stamp file and give it normal user permissions
 stamp=/tmp/snapshot_stamp$$
 echo "Latest daily snapshot: $(date)" > $stamp
 chown 1000:1000 $stamp
 
-# Check if we can write to the destination directory on the NAS
-cmd="[[ -d $dest_dir ]] || { mkdir ${dest_dir}; chown 1000:1000 ${dest_dir}; }"
-ssh $ssh_opt ${user}@${nas} "$cmd"
-rsync -a -e "ssh $ssh_opt" --numeric-ids $stamp ${nas_dest}/.snapshot_daily 2>/dev/null
+# Check if destination directory on NAS exists, and create one if not
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir ]] || { mkdir ${nas_dir}; chown 1000:1000 ${nas_dir}; }"
+rsync -a -e "ssh $ssh_opt" --numeric-ids $stamp ${rsync_dest}/.snapshot_daily 2>/dev/null
 [[ $? -eq 0 ]] || { Say "could not write to the NAS destination directory" "err"; cleanup_exit 1; }
 
 Say "creating daily snapshot of $host" "info"
 
 # step 1: delete the oldest snapshot, if it exists:
-[[ -d ${nfs_dest}/daily.6 ]] && { rm -rf ${nfs_dest}/daily.6; }
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.6 ]] && { rm -rf ${nas_dir}/daily.6; }"
 
 # step 2: shift the middle snapshots(s) back by one, if they exist
-[[ -d ${nfs_dest}/daily.5 ]] && { mv ${nfs_dest}/daily.5 ${nfs_dest}/daily.6; }
-[[ -d ${nfs_dest}/daily.4 ]] && { mv ${nfs_dest}/daily.4 ${nfs_dest}/daily.5; }
-[[ -d ${nfs_dest}/daily.3 ]] && { mv ${nfs_dest}/daily.3 ${nfs_dest}/daily.4; }
-[[ -d ${nfs_dest}/daily.2 ]] && { mv ${nfs_dest}/daily.2 ${nfs_dest}/daily.3; }
-[[ -d ${nfs_dest}/daily.1 ]] && { mv ${nfs_dest}/daily.1 ${nfs_dest}/daily.2; }
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.5 ]] && { mv ${nas_dir}/daily.5 ${nas_dir}/daily.6; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.4 ]] && { mv ${nas_dir}/daily.4 ${nas_dir}/daily.5; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.3 ]] && { mv ${nas_dir}/daily.3 ${nas_dir}/daily.4; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.2 ]] && { mv ${nas_dir}/daily.2 ${nas_dir}/daily.3; }"
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.1 ]] && { mv ${nas_dir}/daily.1 ${nas_dir}/daily.2; }"
 
 # step 3: make a hard-link-only (except for dirs) copy of the latest snapshot, if that exists
-[[ -d ${nfs_dest}/daily.0 ]] && { cp -al ${nfs_dest}/daily.0 ${nfs_dest}/daily.1; }
+ssh $ssh_opt $ssh_dest "[[ -d ${nas_dir}/daily.0 ]] && { cp -al ${nas_dir}/daily.0 ${nas_dir}/daily.1; }"
 
 # step 4: create a snapper snapshot to use as source; this guarantees data consistency;
 # then rsync from the source into the latest snapshot (notice that rsync behaves
 # like cp --remove-destination by default, so the destination is unlinked first.
 # If it were not so, this would copy over the other snapshot(s) too!
-
-cmd="[[ -d $dest_dir/daily.0 ]] || { mkdir ${dest_dir}/daily.0; chown 1000:1000 ${dest_dir}/daily.0; }"
-ssh $ssh_opt ${user}@${nas} "$cmd"
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir/daily.0 ]] || { mkdir ${nas_dir}/daily.0; chown 1000:1000 ${nas_dir}/daily.0; }"
 snp=$(snapper -c home create --type=single --cleanup-algorithm=number --print-number --description="backup")
 src="/home/.snapshots/$snp/snapshot/${user}"
 rsync_opt="-a --delete --delete-excluded --stats --exclude-from=$exc --numeric-ids"
-rsync -e "ssh $ssh_opt" $rsync_opt $src ${nas_dest}/daily.0
+rsync -e "ssh $ssh_opt" $rsync_opt $src ${rsync_dest}/daily.0
 
 # step 5: update the mtime of daily.0 to reflect the snapshot time
-touch ${nfs_dest}/daily.0
+ssh $ssh_opt $ssh_dest "touch ${nas_dir}/daily.0"
 
 # Delete snapper snapshot
 snapper -c home delete $snp
