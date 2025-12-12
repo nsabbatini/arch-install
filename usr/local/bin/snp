@@ -36,9 +36,9 @@ snapshot_nbr=$(snapper create --type=pre --cleanup-algorithm=number --print-numb
 wait_grub_btrfsd 10
 echo "New pre snapshot with number ${snapshot_nbr}"
 
-# yay needs to run as normal user, so we use sudo to do it
+# yay and makepkg need to run as normal user, so we use sudo to do it
 echo "Running command \"${arg}\""
-if [[ "$arg" =~ ^yay.* ]]; then
+if [[ "$arg" =~ ^yay.*|^makepkg.* ]]; then
     cmd="sudo -u narcizo stdbuf -oL -eL ${arg}"
 else
     cmd="stdbuf -oL -eL ${arg}"

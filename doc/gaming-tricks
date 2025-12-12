@@ -55,3 +55,32 @@ which-steam Mass
 
 # Run the mod manager (the fonts are small, but every attempt to increase affected the game)
 PROTON_VERSION="Proton Experimental" protontricks-launch --appid 1328670 ~/Games/MassEffect/ME3TweaksModManager.exe
+
+########################################################################
+# Install mods to Dragon Age Inquisition (DAI)
+#######################################################################\
+
+# Install DAI on Steam, open Properties->Compatibility and select Proton 9.0-4,
+# but do not enter any launch options at this time. Then run DAI once to generate the game prefix.
+
+# To install mods:
+# 1. Download a "patched for Linux" version of Frosty Mod Manager 1.0.6.3
+#    https://www.nexusmods.com/masseffectandromeda/mods/1190?tab=files
+# 2. Extract the mode to any folder, e.g., ~/Games/DAInquisition/FrostyModManager-1.0.6.3-Patched
+# 3. On Steam, click + on the bottom left to add a non-steam game, choose FrostyModManager.exe from the the above folder
+# 4. Click Properties->General and change the name to FrostyModManager
+# 5. Select Properties->Compatibility and choose Proton Experimental
+# 5. Select Properties->shortcut and add the following to the launch options:
+#    STEAM_COMPAT_DATA_PATH="/home/narcizo/.local/share/Steam/steamapps/compatdata/1222690/" %command%
+# 6. Run FrostyModManager, select new (bottom right), then select the DAI game executable
+#    from 'steamapps/common/Dragon Age Inquisition'
+# 7. Using FrostModManager install all desired mods and, when finished, click the "Install Mods" button
+
+# Now that the mods are installed, click Properties->General for the DAI game, and add the following launch option:
+# WINEDLLOVERRIDES="dinput8=n,b" -dataPath "ModData/Default"
+# If this launch option is entered before the mods are installed, the game will not run.
+
+# Issues I encountered:
+# Using complexion mods with female elf will caused the game to fail loading on Hinterlands
+# Using hair mods with custom texture has caused issues
+# Frosty Mod Manager failed to run using protontricks
