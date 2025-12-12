@@ -120,14 +120,19 @@ exit
 
 
 ##################################################################################
-# Configure grub
+# Configure /etc/default/grub
 ##################################################################################
 
-# If the grub fonts are too small, edit /etc/default/grub and change the following:
+# If the grub fonts are too small, change the following:
 #GRUB_GFXMODE=auto
 GRUB_GFXMODE=1024x768
 
-# Then run:
+# If more than one kernel is installed, choose the default one by adding:
+GRUB_DEFAULT=0
+GRUB_TOP_LEVEL=/boot/vmlinuz-linux
+#GRUB_TOP_LEVEL=/boot/vmlinuz-linux-lts
+
+# After editing /etc/default/grub, run the following:
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 
