@@ -9,6 +9,7 @@
 export PROTON_VERSION="Proton Experimental"
 protontricks-launch --appid <game-steam-id> /path/to/mswindows-program
 
+
 ########################################################################
 # Kotor
 #######################################################################\
@@ -43,6 +44,7 @@ for f in "streammusic/*"; do test -f $f && mv "$f" "${f,,}"; done
 for f in "streamvoice/*"; do test -f $f && mv "$f" "${f,,}"; done
 for f in "streamsounds/*"; do test -f $f && mv "$f" "${f,,}"; done
 
+
 ########################################################################
 # Install mods to Mass Effect Legendary Edition
 #######################################################################\
@@ -56,9 +58,10 @@ which-steam Mass
 # Run the mod manager (the fonts are small, but every attempt to increase affected the game)
 PROTON_VERSION="Proton Experimental" protontricks-launch --appid 1328670 ~/Games/MassEffect/ME3TweaksModManager.exe
 
+
 ########################################################################
 # Install mods to Dragon Age Inquisition (DAI)
-#######################################################################\
+########################################################################
 
 # Install DAI on Steam, open Properties->Compatibility and select Proton 9.0-4,
 # but do not enter any launch options at this time. Then run DAI once to generate the game prefix.
@@ -84,3 +87,26 @@ PROTON_VERSION="Proton Experimental" protontricks-launch --appid 1328670 ~/Games
 # Using complexion mods with female elf will caused the game to fail loading on Hinterlands
 # Using hair mods with custom texture has caused issues
 # Frosty Mod Manager failed to run using protontricks
+
+
+############################################################################
+# Patch for Nvidia driver 575.64.05 to make it compatible with newer kernels
+############################################################################
+
+# Nvidia driver versions 580 and 590 have been problematic. Until the newer
+# version gets better, it is best to keep version 575. The problem is that
+# newer kernels (6.17 and 6.18) give compile errors with Nvidia 575.
+# Fortunately, somebody has done a patch to make version 575 compatible.
+
+# Clone the following repository from github:
+cd ~/aur
+git clone https://github.com/picdc/CachyOS-PKGBUILDS.git
+
+# Navigate to the directory of the nvidia-utils package:
+cd CachyOS-PKGBUILDS/nvidia/nvidia-utils
+
+# We need to install nvidia-open-dkms (the open source version), so edit
+# file PKGBUILD and remove 'nvidia-dkms' from line starting with "pkgname=",
+# then run makepkg:
+makepkg -si
+
