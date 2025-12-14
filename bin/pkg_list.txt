@@ -204,4 +204,5 @@ swtpm
 breeze-grub
 
 # Extra
-appmenu-gtk-module
+# This package has problems with virt-manager menus
+#appmenu-gtk-module
