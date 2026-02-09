@@ -91,13 +91,14 @@ if [[ $skip_partition == "false" ]]; then
    btrfs subvolume create @log
    btrfs subvolume create @spool
    btrfs subvolume create @tmp
+   btrfs subvolume create @plasmalogin
 
    echo "Mounting btrfs subvolumes"
    cd /root
    umount /mnt
    btrfs_mnt_opt="noatime,ssd,space_cache=v2,compress=zstd,discard=async"
    mount -t btrfs -o ${btrfs_mnt_opt},subvol=@ $partition3 /mnt
-   mkdir -p /mnt/{home,opt,srv,var/cache,var/lib/libvirt/images,var/log,var/spool,var/tmp}
+   mkdir -p /mnt/{home,opt,srv,var/cache,var/lib/libvirt/images,var/log,var/spool,var/tmp,var/lib/plasmalogin}
    mount -t btrfs -o ${btrfs_mnt_opt},subvol=@home $partition3 /mnt/home
    mount -t btrfs -o ${btrfs_mnt_opt},subvol=@opt $partition3 /mnt/opt
    mount -t btrfs -o ${btrfs_mnt_opt},subvol=@srv $partition3 /mnt/srv
@@ -106,6 +107,7 @@ if [[ $skip_partition == "false" ]]; then
    mount -t btrfs -o ${btrfs_mnt_opt},subvol=@log $partition3 /mnt/var/log
    mount -t btrfs -o ${btrfs_mnt_opt},subvol=@spool $partition3 /mnt/var/spool
    mount -t btrfs -o ${btrfs_mnt_opt},subvol=@tmp $partition3 /mnt/var/tmp
+   mount -t btrfs -o ${btrfs_mnt_opt},subvol=@plasmalogin $partition3 /mnt/var/lib/plasmalogin
 
    echo "Setting no copy on write to virtual machine images"
    chattr -VR +C /mnt/var/lib/libvirt/images
