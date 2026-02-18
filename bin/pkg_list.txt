@@ -100,7 +100,6 @@ vulkan-tools
 
 # KDE Plasma desktop
 plasma-meta
-sddm
 
 # Following list is from kde-applications-meta
 #kde-accessibility-meta

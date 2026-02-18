@@ -73,7 +73,7 @@ systemctl enable avahi-daemon
 systemctl enable avahi-daemon.socket
 systemctl enable bluetooth
 systemctl enable smartd
-systemctl enable sddm
+systemctl enable plasmalogin
 systemctl enable libvirtd
 systemctl enable power-profiles-daemon
 systemctl enable media-Music.automount
