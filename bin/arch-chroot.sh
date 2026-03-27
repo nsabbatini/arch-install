@@ -84,11 +84,11 @@ systemctl enable wait-for-ping
 systemctl enable snapper-timeline.timer
 systemctl enable snapper-cleanup.timer
 systemctl enable grub-btrfsd.service
-if [[ $machine == "desktop" ]]; then
-   sudo systemctl enable nvidia-suspend.service
-   sudo systemctl enable nvidia-hibernate.service
-   sudo systemctl enable nvidia-resume.service
-fi
+#if [[ $machine == "desktop" ]]; then
+   #sudo systemctl enable nvidia-suspend.service
+   #sudo systemctl enable nvidia-hibernate.service
+   #sudo systemctl enable nvidia-resume.service
+#fi
 
 echo ""
 echo "#############################"
