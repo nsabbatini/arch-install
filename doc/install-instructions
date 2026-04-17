@@ -168,3 +168,31 @@ cat << EOF > /home/$USER/.config/spotify-flags.conf
 --enable-features=WaylandWindowDecorations
 --ozone-platform-hint=auto
 EOF
+
+
+###########################################################################################
+# The following two items are workarounds for wifi issues that can be applied to the laptop
+###########################################################################################
+
+# If losing wifi connection after waking from sleep
+echo '#!/usr/bin/env bash
+case ${1} in
+    pre)
+    rfkill block all
+    echo "Killed wifi/bluetooth"
+    ;;
+    post)
+    rfkill unblock all
+    echo "Started wifi/bluetooth"
+    ;;
+esac' | sudo tee /usr/lib/systemd/system-sleep/sleep-fix.sh > /dev/null && sudo chmod +x /usr/lib/systemd/system-sleep/sleep-fix.sh
+
+# If getting ipv4 and ipv6 default routes going through different interfaces (br0 and wlan0),
+# and ipv6 default route disappears (mainly for wifi), make sure that the "Command Output"
+# widget for network status is configured as explained in kde-plasma-configuration document,
+# then set the following service:
+sudo cp ~/bin/monitor-network /usr/local/bin
+sudo cp ~/bin/monitor-network.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now monitor-network.service
+
