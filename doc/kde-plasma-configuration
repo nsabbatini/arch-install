@@ -62,6 +62,9 @@
 #    Focus shortcut: None
 # Exit edit mode
 
+# In settings->display&monitor, set scaling to 100%. This avois issues in steam games.
+# In settings->Text&Fonts, choose IBM Plex Sans 13pt
+
 # It is also possible to export KDE configuration in one machine and import in another.
 # In the source machine:
 konsave -s <profile-name>
@@ -69,13 +72,12 @@ konsave -e <export-name> -d <export_directory>
 # In the receiving machine:
 konsave -i </path/to/export-name>
 
-################
-# Configure SDDM
-################
+########################
+# Configure login screen
+########################
 
-# The config files already configure SDDM to use wayland, but to use the plasma theme do:
-# go to Plasma desktop -> Colors & Themes > Login Screen (SDDM), choose SDDM there and
-# click "Apply Plasma Settings..."
+# Settings -> Login Screen, click "Apply Plasma Settings..."
+# Settings -> Login Screen, click "Configure Appearence..." and choose wallpaper 
 
 ##################################
 # Support for Logitech peripherals
@@ -90,8 +92,10 @@ konsave -i </path/to/export-name>
 #######################
 
 # Open System Settings -> Autostart -> Add New -> Steam Runtime
-# Click Steam properties button -> application tab, then set the following arguments:
-# %U -silent
+# Click Steam properties button -> application tab, then set the following:
+# Environment variables: GDK_SCALE=1 GDK_DPI_SCALE=1.25
+# Program: steam
+# Arguments: %U -silent -enable-features=UseOzonePlatform -ozone-platform=wayland
 
 ############################################
 # Miscellaneous

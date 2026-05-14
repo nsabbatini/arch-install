@@ -20,6 +20,8 @@ steam
 ttf-liberation
 lib32-systemd
 gamescope
+mangohud
+lib32-mangohud
 
 # Lutris
 lutris
