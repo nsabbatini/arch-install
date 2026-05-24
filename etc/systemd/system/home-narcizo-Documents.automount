@@ -1,0 +1,9 @@
+[Unit]
+Description=NFS automount (Documents on elefante)
+
+[Automount]
+Where=/home/narcizo/Documents
+TimeoutIdleSec=10
+
+[Install]
+WantedBy=multi-user.target

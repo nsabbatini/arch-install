@@ -1,0 +1,16 @@
+[Unit]
+Description=NFS mount (Documents on elefante)
+After=wait-for-ping.service
+
+[Mount]
+What=192.168.1.104:/homes/narcizo/Documents
+Where=/home/narcizo/Documents
+Type=nfs4
+TimeoutSec=20s
+Options=_netdev,auto
+LazyUnmount=true
+ForceUnmount=true
+
+[Install]
+WantedBy=remote-fs.target
+WantedBy=multi-user.target
