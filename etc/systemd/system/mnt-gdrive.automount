@@ -1,0 +1,9 @@
+[Unit]
+Description=NFS automount (Google Drive on elefante)
+
+[Automount]
+Where=/mnt/gdrive
+TimeoutIdleSec=10
+
+[Install]
+WantedBy=multi-user.target
