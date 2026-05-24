@@ -57,6 +57,7 @@ mkdir -p /media/Videos
 mkdir -p /mnt/backup
 
 echo "Enabling systemd services..."
+systemctl daemon-reload
 systemctl enable nftables
 systemctl enable cups
 systemctl enable sshd
@@ -80,15 +81,11 @@ systemctl enable media-Music.automount
 systemctl enable media-Pictures.automount
 systemctl enable media-Videos.automount
 systemctl enable mnt-backup.automount
+systemctl enable mnt-gdrive.automount
 systemctl enable wait-for-ping
 systemctl enable snapper-timeline.timer
 systemctl enable snapper-cleanup.timer
 systemctl enable grub-btrfsd.service
-#if [[ $machine == "desktop" ]]; then
-   #sudo systemctl enable nvidia-suspend.service
-   #sudo systemctl enable nvidia-hibernate.service
-   #sudo systemctl enable nvidia-resume.service
-#fi
 
 echo ""
 echo "#############################"
