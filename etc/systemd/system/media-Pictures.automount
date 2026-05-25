@@ -1,9 +1,0 @@
-[Unit]
-Description=NFS automount (Pictures on elefante)
-
-[Automount]
-Where=/media/Pictures
-TimeoutIdleSec=10
-
-[Install]
-WantedBy=multi-user.target

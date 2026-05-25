@@ -1,0 +1,9 @@
+[Unit]
+Description=NFS automount (/share/Videos on elefante)
+
+[Automount]
+Where=/home/narcizo/Videos
+TimeoutIdleSec=10
+
+[Install]
+WantedBy=multi-user.target

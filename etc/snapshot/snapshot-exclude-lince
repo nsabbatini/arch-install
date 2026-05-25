@@ -10,6 +10,12 @@
 + .vim/
 + .vimrc
 - aur/
+- bin/
+- Documents/
+- github /
+- Music/
+- Pictures/
+- Videos /
 - Vaults/
 - .config/google-chrome/
 - .local/share/baloo/

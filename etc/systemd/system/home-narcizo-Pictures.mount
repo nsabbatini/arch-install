@@ -1,10 +1,10 @@
 [Unit]
-Description=NFS mount (Music on elefante)
+Description=NFS mount (/share/Pictures on elefante)
 After=wait-for-ping.service
 
 [Mount]
-What=192.168.1.104:/Music
-Where=/media/Music
+What=192.168.1.104:/Pictures
+Where=/home/narcizo/Pictures
 Type=nfs4
 TimeoutSec=20s
 Options=_netdev,auto

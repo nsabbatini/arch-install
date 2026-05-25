@@ -1,0 +1,9 @@
+[Unit]
+Description=NFS automount (/share/Music on elefante)
+
+[Automount]
+Where=/home/narcizo/Music
+TimeoutIdleSec=10
+
+[Install]
+WantedBy=multi-user.target

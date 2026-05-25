@@ -1,9 +1,0 @@
-[Unit]
-Description=NFS automount (Music on elefante)
-
-[Automount]
-Where=/media/Music
-TimeoutIdleSec=10
-
-[Install]
-WantedBy=multi-user.target
