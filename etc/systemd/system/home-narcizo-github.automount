@@ -1,0 +1,9 @@
+[Unit]
+Description=NFS automount (/homes/narcizo/github on elefante)
+
+[Automount]
+Where=/home/narcizo/github
+TimeoutIdleSec=10
+
+[Install]
+WantedBy=multi-user.target
