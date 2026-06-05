@@ -1,0 +1,11 @@
+[Unit]
+Description="Mount nfs"
+After=wait-for-ping.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mount-nfs
+
+[Install]
+WantedBy=remote-fs.target
+WantedBy=multi-user.target

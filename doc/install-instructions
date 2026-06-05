@@ -86,6 +86,13 @@ sudo pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY KDE_SESSION_VERSION=6 KD
 # Choose breeze dark for global theme, download catppuccin Frappe Flamingo color scheme and apply,
 # then change fonts to the same ones already being used.
 
+############################################################################################################
+#                                                 IMPORTANT
+# The snapshot systemd services run with root permissions. They run rsync using ssh keys from user narcizo.
+# It is necessary to connect to the NAS via ssh one time using user 'narcizo' and user 'root'. This will
+# save the NAS as known host in .ssh/known_hosts. Actually, the root ssh connection may fail, but it is
+# necessary to go just until the part that saves to known_hosts.
+############################################################################################################
 
 ##################################################################################
 # Use Yubikey to provide passwordless acess to sudo, su
@@ -134,6 +141,61 @@ GRUB_TOP_LEVEL=/boot/vmlinuz-linux
 
 # After editing /etc/default/grub, run the following:
 sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+
+##################################################################################
+# Configure nfs/kerberos
+##################################################################################
+
+# Add NFS client entries to /etc/krb5.keytab
+
+# For lince:
+sudo kadmin -p kdcadmin/admin@LOCALDOMAIN
+kadmin: ktadd nfs/lince.localdomain
+kadmin: ktadd nfs/lince.localdomain
+
+# For castor
+sudo kadmin -p kdcadmin/admin@LOCALDOMAIN
+kadmin: ktadd nfs/castor.localdomain
+
+# Enable the GSS_USE_PROXY variable globally for the client daemon environment
+sudo systemctl edit rpc-gssd.service
+
+# Add the following lines into the override file
+[Service]
+Environment=GSS_USE_PROXY=yes
+
+# Restart the system
+sudo reboot
+
+# Create the mount point and mount the NFS share (for testing, because these will be automounted)
+sudo mkdir /mnt/documents
+sudo mount -t nfs -o sec=krb5p cobra.localdomain:/documents /mnt/documents
+
+# Obtain a Kerberos ticket:
+kinit narcizo@LOCALDOMAIN
+
+# Verify the ticket
+klist
+
+# The install script installed a systemd user timer and service that renews
+# the kerberos ticket every few hours
+# That service needs a keytab file that contains a hash of the password
+mkdir ~/.kerberos
+ktutil
+ktutil: addent -password -p narcizo@LOCALDOMAIN -k 1 -e aes256-cts-hmac-sha1-96
+ktutil: wkt /home/narcizo/.kerberos/user.keytab
+ktutil: l -e
+ktutil: exit
+
+sudo ktutil
+ktutil: addent -password -p narcizo@LOCALDOMAIN -k 1 -e aes256-cts-hmac-sha1-96
+ktutil: wkt /var/lib/gssproxy/clients/1000.keytab
+ktutil: exit
+
+# Now we enable the service to run even if user is not logged
+loginctl enable-linger
+systemctl --user enable --now refresh-kerberos-ticket.timer
 
 
 ##################################################################################

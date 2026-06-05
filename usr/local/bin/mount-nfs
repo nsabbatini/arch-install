@@ -1,0 +1,7 @@
+#!/bin/bash
+
+mount -t nfs4 -o sec=krb5p,vers=4.2 cobra.localdomain:/backups /mnt/backups
+mount -t nfs4 -o sec=krb5p,vers=4.2 cobra.localdomain:/pictures /home/narcizo/Pictures
+mount -t nfs4 -o sec=krb5p,vers=4.2 cobra.localdomain:/music /home/narcizo/Music
+mount -t nfs4 -o sec=krb5p,vers=4.2 cobra.localdomain:/videos /home/narcizo/Videos
+

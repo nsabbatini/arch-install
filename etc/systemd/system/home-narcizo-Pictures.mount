@@ -8,7 +8,7 @@ Where=/home/narcizo/Pictures
 Type=nfs4
 TimeoutSec=20s
 Options=_netdev,auto
-LazyUnmount=true
+#LazyUnmount=true
 ForceUnmount=true
 
 [Install]

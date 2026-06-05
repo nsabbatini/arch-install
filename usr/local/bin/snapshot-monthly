@@ -24,13 +24,13 @@ exit $1
 
 user="narcizo"
 host=$(hostname)
-nas_ip="192.168.1.104"
+nas_ip="192.168.1.84"
 
 # This script is run under root, but we will make rsync use ssh config and keys from $user
 ssh_opt="-F /home/$user/.ssh/config -i /home/$user/.ssh/id_rsa"
 
 # nas_dir is the backup destination directory on the NAS server
-nas_dir="/share/linux-backup/${host}"
+nas_dir="/pool/backups/${host}"
 ssh_dest="${user}@${nas_ip}"
 rsync_dest="${ssh_dest}:${nas_dir}"
 

@@ -1,8 +1,8 @@
 [Unit]
-Description=NFS automount (linux-backup on elefante)
+Description=NFS automount (linux-backup on cobra)
 
 [Automount]
-Where=/mnt/backup
+Where=/mnt/backups
 TimeoutIdleSec=10
 
 [Install]

@@ -91,6 +91,10 @@ systemctl enable wait-for-ping
 systemctl enable snapper-timeline.timer
 systemctl enable snapper-cleanup.timer
 systemctl enable grub-btrfsd.service
+systemctl enable nfs-utils
+systemctl enable nfs-client.target
+systemctl enable gssproxy.service
+systemctl mask drkonqi-coredump-process@
 
 echo ""
 echo "#############################"
