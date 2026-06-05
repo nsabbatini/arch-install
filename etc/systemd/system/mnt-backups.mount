@@ -1,10 +1,9 @@
 [Unit]
 Description=NFS mount (linux-backup on cobra)
-After=network-online.target rpc-gssd.service auth-rpcgss-module.service
-Requires=rpc-gssd.service
+After=wait-for-ping.service
 
 [Mount]
-What=192.168.1.84:/srv/nfsv4/backups
+What=192.168.1.84:/backups
 Where=/mnt/backups
 Type=nfs4
 TimeoutSec=20s

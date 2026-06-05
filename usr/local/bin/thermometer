@@ -1,0 +1,18 @@
+#!/bin/bash
+
+lim1="60"
+lim2="80"
+
+# Vector with 3 temperatures: CPU, SSD, GPU
+temp=( $(sensors | awk '/^Pack/ { print $4 } /^Comp/ { print $2 }' | sed -E 's/[+°C]//g') $(nvidia-settings -q gpucoretemp -t) )
+
+# Find the largest
+largest=$(printf '%s\n' "${temp[@]}" | awk '$1 > m || NR == 1 { m = $1 } END { print m }')
+
+if (( $(echo "$largest < $lim1" | bc -l) )); then
+    printf "\e[0m\uf2ca"
+elif (( $(echo "$largest > $lim2" | bc -l) )); then
+    printf "\e[31m\uf2c7"
+else
+    printf "\e[33m\uf2c9"
+fi

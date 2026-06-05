@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Temporary file that stores network interface with highest routing priority
+ifc_file="/tmp/narcizo-853c3ad4-dd09-4091-8d17-666a698d1092"
+
+# Find interfaces with lowest routing metric (highest priority)
+ifc4=$(ip -4 route show default | sed -E 's/^.*dev\s(\w+).*metric\s(\w+).*$/\2 \1/g' | sort -n -k1 | awk 'NR==1 { print $2 }')
+ifc6=$(ip -6 route show default | sed -E 's/^.*dev\s(\w+).*metric\s(\w+).*$/\2 \1/g' | sort -n -k1 | awk 'NR==1 { print $2 }')
+
+# This string contains the interfaces for ipv4 and ipv6
+ifc="${ifc4}_${ifc6}"
+
+# Only write back if interfaces changed
+previous_ifc=$(cat $ifc_file)
+[[ $ifc != $previous_ifc ]] && { echo $ifc > $ifc_file; }
+
+case "$ifc" in
+    "br0_br0")
+        printf "\e[0m\Uf0200"
+        ;;
+    "wlan0_wlan0")
+        printf "\e[0m\Uf05a9"
+        ;;
+    "br0_"|"_br0")
+        printf "\e[33m\Uf0200"
+        ;;
+    "wlan0_"|"_wlan0")
+        printf "\e[33m\Uf05a9"
+        ;;
+    "br0_wlan0"|"wlan0_br0")
+        printf "\e[31m\Uf0c8a"
+        ;;
+    "_")
+        printf "\e[31m\Uf16b5"
+        ;;
+esac

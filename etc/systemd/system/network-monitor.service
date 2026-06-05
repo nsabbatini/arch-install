@@ -1,0 +1,11 @@
+[Unit]
+Description="Monitor mismatch between ipv4 and ipv6 default routes"
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/network-monitor
+
+[Install]
+WantedBy=multi-user.target

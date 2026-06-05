@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Temporary file that stores network interface with highest routing priority
+ifc_file="/tmp/narcizo-853c3ad4-dd09-4091-8d17-666a698d1092"
+
+ifc=$(cat $ifc_file)
+
+case $ifc in
+    "br0_br0")
+        printf "Ethernet br0 - IPv4 and IPv6"
+    ;;
+    "wlan0_wlan0"|"_wlan0"|"wlan0_")
+        iwctl station wlan0 show | \
+        awk '/^\s+Connected network/ { printf "%s ", $3 } /^\s+AverageRSSI/ { printf "[%s]", $2 }'
+    ;;&
+    "wlan0_wlan0")
+        printf " - IPv4 and IPv6\nClick to configure wifi connection"
+    ;;
+    "wlan0_")
+        printf " - IPv4 Only\nClick to configure wifi connection"
+    ;;
+    "_wlan0")
+        printf " - IPv6 Only\nClick to configure wifi connection"
+    ;;
+    "br0_")
+        printf "Ethernet br0 - IPv4 Only"
+    ;;
+    "_br0")
+        printf "Ethernet br0 - IPv6 Only"
+    ;;
+    "br0_wlan0")
+        printf "Routes do not match: br0 ipv4 and wlan0 ipv6\nReset systemd-networkd (use rnet alias)"
+    ;;
+    "wlan0_br0")
+        printf "Routes do not match: wlan0 ipv4 and br0 ipv6\nReset systemd-networkd (use rnet alias)"
+    ;;
+    "none")
+        printf "No network connection\nClick to configure wifi"
+    ;;
+esac
+

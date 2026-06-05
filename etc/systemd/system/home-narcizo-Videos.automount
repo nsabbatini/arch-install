@@ -1,5 +1,5 @@
 [Unit]
-Description=NFS automount (/share/Videos on elefante)
+Description=NFS automount (/share/Videos on cobra)
 
 [Automount]
 Where=/home/narcizo/Videos

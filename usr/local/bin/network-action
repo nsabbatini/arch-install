@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Temporary file that stores network interface with highest routing priority
+ifc_file="/tmp/narcizo-853c3ad4-dd09-4091-8d17-666a698d1092"
+
+ifc=$(cat $ifc_file)
+
+case $ifc in
+    "br0_br0"|"br0_"|"_br0")
+    ;;
+    *)
+        konsole -p "TerminalColumns=80" -p "TerminalRows=40" -e impala
+    ;;
+esac

@@ -1,5 +1,5 @@
 [Unit]
-Description=NFS automount (/share/Music on elefante)
+Description=NFS automount (/share/Music on cobra)
 
 [Automount]
 Where=/home/narcizo/Music

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Use amixer to find out if the microphone is muted or not; 0 = muted
+mic_status=$(amixer get Capture | tail -2 | grep -c '\[on\]')
+
+# Detect if any program is using the microphone
+#find /proc/asound -name status -exec grep -v -q -s closed {} +
+grep -q -s -v closed /proc/asound/card?/pcm?c/sub?/status
+[[ $? -eq 0 ]] && { mic_used="yes"; } || { mic_used="no"; }
+
+if [[ $mic_status -eq 0 ]]; then
+    if [[ $mic_used == "yes" ]]; then
+        printf "\e[32m\uf131"
+    else
+        printf "\e[0m\uf131"
+    fi
+else
+    if [[ $mic_used == "yes" ]]; then
+        printf "\e[32m\uf130"
+    else
+        printf "\e[0m\uf130"
+    fi
+fi
+
+exit 0

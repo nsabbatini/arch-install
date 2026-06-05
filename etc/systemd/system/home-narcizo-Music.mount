@@ -1,13 +1,13 @@
 [Unit]
-Description=NFS mount (/share/Music on elefante)
+Description=NFS mount (/share/Music on cobra)
 After=wait-for-ping.service
 
 [Mount]
-What=192.168.1.104:/Music
+What=192.168.1.84:/music
 Where=/home/narcizo/Music
 Type=nfs4
 TimeoutSec=20s
-Options=_netdev,auto
+Options=_netdev,auto,sec=krb5p
 #LazyUnmount=true
 ForceUnmount=true
 

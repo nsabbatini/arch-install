@@ -27,12 +27,12 @@
 # Exit edit mode
 
 # Create tray icons using "Command Output" widget:
-#    wifi: configure "command output" with ~/bin/network-status.sh in the command field,
-#          and ~/bin/network-hover.sh in the actions->Tooltip field.
-#    Temperature: configure "command output" with ~/bin/thermometer.sh in the command field,
-#          and ~/bin/temperature.sh in the actions->tooltip action field.
-#    microphone: configure "command output" with ~/bin/mic_status.sh in the command field,
-#          ~/bin/mic_volume.sh in the actions->tooltip action field, and ~/bin/mic_toggle
+#    wifi: configure "command output" with /usr/local/bin/network-status in the command field,
+#          and /usr/local/bin/network-hover in the actions->Tooltip field.
+#    Temperature: configure "command output" with /usr/local/bin/thermometer in the command field,
+#          and /usr/local/bin/temperature in the actions->tooltip action field.
+#    microphone: configure "command output" with /usr/local/bin/mic-status in the command field,
+#          /usr/local/bin/mic-volume in the actions->tooltip action field, and /usr/local/bin/mic-toggle
 #          in the actions->click field. Only lince has a microphone.
 
 # If using systemd-networkd with iwd, there is no widget on the system tray to connecto to wifi.

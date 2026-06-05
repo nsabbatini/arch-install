@@ -1,0 +1,5 @@
+#!/bin/bash
+
+printf "%s: %s   " "CPU" "$(sensors | awk '/^Pack/ { print $4 }' | sed 's/[+°C]//g')"
+printf "%s: %s   " "SSD" "$(sensors | awk '/^Comp/ { print $2 }' | sed 's/[+°C]//g')"
+printf "%s: %s" "GPU" "$(nvidia-settings -q gpucoretemp -t)"

@@ -268,8 +268,5 @@ esac' | sudo tee /usr/lib/systemd/system-sleep/sleep-fix.sh > /dev/null && sudo 
 # and ipv6 default route disappears (mainly for wifi), make sure that the "Command Output"
 # widget for network status is configured as explained in kde-plasma-configuration document,
 # then set the following service:
-sudo cp ~/bin/monitor-network /usr/local/bin
-sudo cp ~/bin/monitor-network.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now monitor-network.service
+sudo systemctl enable --now network-monitor.service
 
