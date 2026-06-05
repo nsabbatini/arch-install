@@ -2,10 +2,8 @@
 Description="Refresh kerberos ticket every 4 hours"
 
 [Timer]
-Persistent=true
 OnStartupSec=10s
 OnUnitActiveSec=4h
-AccuracySec=1m
 Unit=refresh-kerberos-ticket.service
 
 [Install]

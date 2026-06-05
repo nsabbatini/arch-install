@@ -8,9 +8,4 @@ Where=/mnt/backups
 Type=nfs4
 TimeoutSec=20s
 Options=_netdev,auto,sec=krb5p
-LazyUnmount=true
 ForceUnmount=true
-
-[Install]
-WantedBy=remote-fs.target
-WantedBy=multi-user.target
