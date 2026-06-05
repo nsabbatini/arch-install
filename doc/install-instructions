@@ -157,6 +157,7 @@ kadmin: ktadd nfs/lince.localdomain
 # For castor
 sudo kadmin -p kdcadmin/admin@LOCALDOMAIN
 kadmin: ktadd nfs/castor.localdomain
+kadmin: exit
 
 # Enable the GSS_USE_PROXY variable globally for the client daemon environment
 sudo systemctl edit rpc-gssd.service
@@ -167,10 +168,6 @@ Environment=GSS_USE_PROXY=yes
 
 # Restart the system
 sudo reboot
-
-# Create the mount point and mount the NFS share (for testing, because these will be automounted)
-sudo mkdir /mnt/documents
-sudo mount -t nfs -o sec=krb5p cobra.localdomain:/documents /mnt/documents
 
 # Obtain a Kerberos ticket:
 kinit narcizo@LOCALDOMAIN
@@ -188,10 +185,10 @@ ktutil: wkt /home/narcizo/.kerberos/user.keytab
 ktutil: l -e
 ktutil: exit
 
-sudo ktutil
-ktutil: addent -password -p narcizo@LOCALDOMAIN -k 1 -e aes256-cts-hmac-sha1-96
-ktutil: wkt /var/lib/gssproxy/clients/1000.keytab
-ktutil: exit
+#sudo ktutil
+#ktutil: addent -password -p narcizo@LOCALDOMAIN -k 1 -e aes256-cts-hmac-sha1-96
+#ktutil: wkt /var/lib/gssproxy/clients/1000.keytab
+#ktutil: exit
 
 # Now we enable the service to run even if user is not logged
 loginctl enable-linger
