@@ -141,6 +141,18 @@ echo "Creating /etc/hosts"
 cat << EOF > /mnt/etc/hosts
 127.0.0.1 localhost
 ::1       localhost
+
+192.168.1.134 lince.localdomain lince
+fd52:bdde:dc39:1:1227:f5ff:fefa:7904 lince.localdomain lince
+
+192.168.1.108 lince-w.localdomain lince-w
+fd52:bdde:dc39:1:4e1d:96ff:fedb:7a4 lince-w.localdomain lince-w
+
+192.168.1.84 cobra.localdomain cobra
+fd52:bdde:dc39:1:6e1f:f7ff:fea7:de3a cobra.localdomain cobra
+
+192.168.1.42 castor.localdomain castor
+fd52:bdde:dc39:1:e2d5:5eff:fee2:4b58 castor.localdomain castor
 EOF
 
 echo "Creating network files"
