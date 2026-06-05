@@ -1,5 +1,5 @@
 [Unit]
-Description=NFS automount (/homes/narcizo/github on elefante)
+Description=NFS automount (/homes/narcizo/github on cobra)
 
 [Automount]
 Where=/home/narcizo/github
