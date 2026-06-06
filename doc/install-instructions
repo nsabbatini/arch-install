@@ -86,13 +86,41 @@ sudo pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY KDE_SESSION_VERSION=6 KD
 # Choose breeze dark for global theme, download catppuccin Frappe Flamingo color scheme and apply,
 # then change fonts to the same ones already being used.
 
-############################################################################################################
-#                                                 IMPORTANT
-# The snapshot systemd services run with root permissions. They run rsync using ssh keys from user narcizo.
-# It is necessary to connect to the NAS via ssh one time using user 'narcizo' and user 'root'. This will
-# save the NAS as known host in .ssh/known_hosts. Actually, the root ssh connection may fail, but it is
-# necessary to go just until the part that saves to known_hosts.
-############################################################################################################
+################################################################################################
+# ssh and known_hosts
+################################################################################################
+
+# After ssh keys are restored from backup, it is necessary to go to all machines
+# that connect to this server, and fix the .ssh/know_hosts file, because ssh will
+# detect differences on the newly installed machine and refuse to connect.
+
+# To enable snapshots run by root using our user keys, it is convenient to store known ssh hosts globally
+ssh-keyscan sapo | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan sapo.localdomain | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan tucano | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan tucano.localdomain | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan castor | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan castor.localdomain | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan lince | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan lince.localdomain | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan elefante | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan elefante.localdomain | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan 192.168.1.1 | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan 192.168.1.42 | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan 192.168.1.84 | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan 192.168.1.104 | sudo tee -a /etc/ssh/ssh_known_hosts
+# The above commands do not work for pluto, so remove .ssh/known_hosts, connect to pluto via ssh:
+ssh pluto.sabbatini.xyz
+# then append .ssh/known_hosts to /etc/ssh/ssh_known_hosts
+cat .ssh/known_hosts | sudo tee -a /etc/ssh/ssh_known_hosts
+
+# If it was not possible to recover .ssh from backup, create new keys and propagate
+# to other machines. Besides, if .ssh was not recovered, the following needs to be done
+# to configure cloudflare tunnel. Get a service token from cloudflare site, enable that
+# service token for ssh authentication in cloudflare site, and add to ~/.ssh/config the following:
+  Host pluto.sabbatini.xyz
+     ProxyCommand /usr/bin/cloudflared access ssh --hostname %h --service-token-id=.... --service-token-secret=....
+
 
 ##################################################################################
 # Use Yubikey to provide passwordless acess to sudo, su
