@@ -95,6 +95,8 @@ sudo pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY KDE_SESSION_VERSION=6 KD
 # detect differences on the newly installed machine and refuse to connect.
 
 # To enable snapshots run by root using our user keys, it is convenient to store known ssh hosts globally
+ssh-keyscan cobra | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan cobra.localdomain | sudo tee -a /etc/ssh/ssh_known_hosts
 ssh-keyscan sapo | sudo tee -a /etc/ssh/ssh_known_hosts
 ssh-keyscan sapo.localdomain | sudo tee -a /etc/ssh/ssh_known_hosts
 ssh-keyscan tucano | sudo tee -a /etc/ssh/ssh_known_hosts
