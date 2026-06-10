@@ -174,58 +174,6 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 
 ##################################################################################
-# Configure nfs/kerberos
-##################################################################################
-
-# Add NFS client entries to /etc/krb5.keytab
-
-# For lince:
-sudo kadmin -p kdcadmin/admin@LOCALDOMAIN
-kadmin: ktadd nfs/lince.localdomain
-kadmin: ktadd nfs/lince.localdomain
-
-# For castor
-sudo kadmin -p kdcadmin/admin@LOCALDOMAIN
-kadmin: ktadd nfs/castor.localdomain
-kadmin: exit
-
-# Enable the GSS_USE_PROXY variable globally for the client daemon environment
-sudo systemctl edit rpc-gssd.service
-
-# Add the following lines into the override file
-[Service]
-Environment=GSS_USE_PROXY=yes
-
-# Restart the system
-sudo reboot
-
-# Obtain a Kerberos ticket:
-kinit narcizo@LOCALDOMAIN
-
-# Verify the ticket
-klist
-
-# The install script installed a systemd user timer and service that renews
-# the kerberos ticket every few hours
-# That service needs a keytab file that contains a hash of the password
-mkdir ~/.kerberos
-ktutil
-ktutil: addent -password -p narcizo@LOCALDOMAIN -k 1 -e aes256-cts-hmac-sha1-96
-ktutil: wkt /home/narcizo/.kerberos/user.keytab
-ktutil: l -e
-ktutil: exit
-
-#sudo ktutil
-#ktutil: addent -password -p narcizo@LOCALDOMAIN -k 1 -e aes256-cts-hmac-sha1-96
-#ktutil: wkt /var/lib/gssproxy/clients/1000.keytab
-#ktutil: exit
-
-# Now we enable the service to run even if user is not logged
-loginctl enable-linger
-systemctl --user enable --now refresh-kerberos-ticket.timer
-
-
-##################################################################################
 # If not able to recover backup, the following can be recreated
 ##################################################################################
 

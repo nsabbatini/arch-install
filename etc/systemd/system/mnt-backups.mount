@@ -7,5 +7,5 @@ What=192.168.1.84:/backups
 Where=/mnt/backups
 Type=nfs4
 TimeoutSec=20s
-Options=_netdev,auto,sec=krb5p
+Options=_netdev,auto,sec=sys
 ForceUnmount=true

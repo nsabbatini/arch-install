@@ -93,7 +93,6 @@ systemctl enable snapper-cleanup.timer
 systemctl enable grub-btrfsd.service
 systemctl enable nfs-utils
 systemctl enable nfs-client.target
-systemctl enable gssproxy.service
 
 echo ""
 echo "#############################"

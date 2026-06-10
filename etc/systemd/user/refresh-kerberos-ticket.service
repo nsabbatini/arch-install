@@ -1,6 +1,0 @@
-[Unit]
-Description="Refresh kerberos ticket using keytab"
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/kinit -k -t /home/narcizo/.kerberos/user.keytab narcizo@LOCALDOMAIN
