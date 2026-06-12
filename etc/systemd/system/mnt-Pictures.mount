@@ -1,11 +1,11 @@
 [Unit]
-Description=NFS mount (/share/Pictures on cobra)
+Description=NFS mount (pictures on cobra)
 After=wait-for-ping.service
 
 [Mount]
 What=192.168.1.84:/pictures
-Where=/home/narcizo/Pictures
+Where=/mnt/Pictures
 Type=nfs4
 TimeoutSec=20s
-Options=_netdev,auto,sec=sys
+Options=_netdev,auto,sec=sys,vers=4.2
 ForceUnmount=true

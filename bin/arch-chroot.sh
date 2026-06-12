@@ -51,12 +51,8 @@ echo "Choose a password for your user account"
 passwd $user
 
 echo "Creating disk mounts for NAS shares"
-mkdir -p /mnt/backup
-mkdir -p /mnt/gdrive
-mkdir -p /home/$user/bin
-mkdir -p /home/$user/github
-chown $user:$user /home/$user/bin
-chown $user:$user /home/$user/github
+mkdir -p /mnt/{backups,$user,Music,Pictures,Videos}
+chown $user:$user /mnt/{$user,Music,Pictures,Videos}
 
 echo "Enabling systemd services..."
 systemctl daemon-reload
@@ -79,14 +75,11 @@ systemctl enable smartd
 systemctl enable plasmalogin
 systemctl enable libvirtd
 systemctl enable power-profiles-daemon
-systemctl enable mnt-backup.automount
-systemctl enable mnt-gdrive.automount
-systemctl enable home-narcizo-bin.automount
-systemctl enable home-narcizo-Documents.automount
-systemctl enable home-narcizo-github.automount
-systemctl enable home-narcizo-Music.automount
-systemctl enable home-narcizo-Pictures.automount
-systemctl enable home-narcizo-Videos.automount
+systemctl enable mnt-backups.automount
+systemctl enable mnt-narcizo.automount
+systemctl enable mnt-Music.automount
+systemctl enable mnt-Pictures.automount
+systemctl enable mnt-Videos.automount
 systemctl enable wait-for-ping
 systemctl enable snapper-timeline.timer
 systemctl enable snapper-cleanup.timer

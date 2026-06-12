@@ -1,0 +1,9 @@
+[Unit]
+Description=NFS automount (videos on cobra)
+
+[Automount]
+Where=/mnt/Videos
+TimeoutIdleSec=10
+
+[Install]
+WantedBy=multi-user.target

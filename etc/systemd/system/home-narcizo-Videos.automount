@@ -1,9 +1,0 @@
-[Unit]
-Description=NFS automount (/share/Videos on cobra)
-
-[Automount]
-Where=/home/narcizo/Videos
-TimeoutIdleSec=10
-
-[Install]
-WantedBy=multi-user.target

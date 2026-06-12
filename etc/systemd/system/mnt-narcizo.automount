@@ -1,0 +1,9 @@
+[Unit]
+Description=NFS automount (narcizo on cobra)
+
+[Automount]
+Where=/mnt/narcizo
+TimeoutIdleSec=10
+
+[Install]
+WantedBy=multi-user.target

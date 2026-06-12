@@ -1,8 +1,8 @@
 [Unit]
-Description=NFS automount (Google Drive on elefante)
+Description=NFS automount (pictures on cobra)
 
 [Automount]
-Where=/mnt/gdrive
+Where=/mnt/Pictures
 TimeoutIdleSec=10
 
 [Install]

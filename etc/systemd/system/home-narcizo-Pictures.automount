@@ -1,9 +1,0 @@
-[Unit]
-Description=NFS automount (/share/Pictures on cobra)
-
-[Automount]
-Where=/home/narcizo/Pictures
-TimeoutIdleSec=10
-
-[Install]
-WantedBy=multi-user.target

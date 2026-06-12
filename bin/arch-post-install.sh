@@ -45,7 +45,7 @@ else
 fi
 
 # Restore backup to the home directory
-src_dir="/mnt/backup/$host.localdomain/daily.0/$USER"
+src_dir="/mnt/backups/$host.localdomain/daily.0/$USER"
 dst_dir="/home/$USER"
 if [[ -d $src_dir ]]; then
    # Need to ran with sudo to preserve ownership

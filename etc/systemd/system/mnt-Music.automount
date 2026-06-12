@@ -1,8 +1,8 @@
 [Unit]
-Description=NFS automount (/share/Music on cobra)
+Description=NFS automount (music on cobra)
 
 [Automount]
-Where=/home/narcizo/Music
+Where=/mnt/Music
 TimeoutIdleSec=10
 
 [Install]

@@ -1,11 +1,11 @@
 [Unit]
-Description=NFS mount (/share/Videos on cobra)
+Description=NFS mount (videos on cobra)
 After=wait-for-ping.service
 
 [Mount]
 What=192.168.1.84:/videos
-Where=/home/narcizo/Videos
+Where=/mnt/Videos
 Type=nfs4
 TimeoutSec=20s
-Options=_netdev,auto,sec=sys
+Options=_netdev,auto,sec=sys,vers=4.2
 ForceUnmount=true
