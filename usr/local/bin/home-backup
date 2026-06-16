@@ -1,0 +1,84 @@
+#!/bin/bash
+# ----------------------------------------------------------------------
+# Home directory backup utility
+# ----------------------------------------------------------------------
+# Makes a backup of the home directory to a remote NAS using rsync
+# ----------------------------------------------------------------------
+
+PATH="/usr/local/bin:/usr/bin:/usr/sbin"
+
+# Logs to systemd journal
+Say(){
+    echo $1 | systemd-cat -t home-backup -p $2
+}
+
+# Remove temp files
+cleanup_exit() {
+[[ -f $stamp ]] && { rm $stamp; }
+exit $1
+}
+
+[[ $EUID -eq 0 ]] || { Say "Need to run as root" "err"; cleanup_exit 1; }
+
+# Import configuration parameters
+cfg_dir="/etc/home-backup"
+cfg_file="$cfg_dir/backup.conf"
+[[ -f $cfg_file ]] && { source ${cfg_file}; } || { Say "$cfg_file missing" "err"; cleanup_exit 1; }
+
+# Test variables from configuration file
+[[ -z "$host" ]] && { Say "variable host undefined" "err"; cleanup_exit 1; }
+[[ -z "$user" ]] && { Say "variable user undefined" "err"; cleanup_exit 1; }
+[[ -z "$nas_ip" ]] && { Say "variable nas_ip undefined" "err"; cleanup_exit 1; }
+[[ -z "$nas_dir" ]] && { Say "variable nar_dir undefined" "err"; cleanup_exit 1; }
+
+# This script is run under root, but we will make rsync use ssh config and keys from $user
+ssh_opt="-F /home/$user/.ssh/config -i /home/$user/.ssh/id_rsa"
+
+# $nas_dir is the backup destination directory on the NAS server
+ssh_dest="${user}@${nas_ip}"
+rsync_dest="${ssh_dest}:${nas_dir}"
+
+# /etc/home-backup contains a file with paths to be excluded from the backup
+# We require that this file exists, even if empty
+exc="$cfg_dir/backup-exclude-${host}"
+[[ -f $exc ]] || { Say "$exc does not exist" "err"; cleanup_exit 1; }
+
+# Check if network is up and we can reach the NAS
+nas_ping=0
+for i in {1..5}; do
+   ping -c 1 -W 1 $nas_ip &> /dev/null
+   [[ $? -eq 0 ]] && { nas_ping=1; break; }
+   sleep 2
+done
+[[ $nas_ping -eq 1 ]] || { Say "ping to $nas_ip failed" "err"; cleanup_exit 1; }
+
+# Create temporaty stamp file and give it normal user permissions
+stamp=/tmp/home-backup$$
+echo "Latest backup: $(date)" > $stamp
+chown 1000:1000 $stamp
+
+# Check if destination directory on NAS exists, and create one if not
+ssh $ssh_opt $ssh_dest "[[ -d $nas_dir ]] || { mkdir ${nas_dir}; chown 1000:1000 ${nas_dir}; }"
+rsync -e "ssh $ssh_opt" -a --numeric-ids --rsync-path='sudo rsync' $stamp ${rsync_dest}/.backup 2>/dev/null
+[[ $? -eq 0 ]] || { Say "could not write to the NAS destination directory" "err"; cleanup_exit 1; }
+
+Say "creating $user home directory backup from $host" "info"
+
+# Create a snapper snapshot to use as source; this guarantees data consistency
+snp=$(snapper -c home create --type=single --cleanup-algorithm=number --print-number --description="backup")
+
+# rsync can only preserve ownership and permissions on the destination if it runs as root there.
+# Therefore $user must be able to run 'sudo rsync' on the NAS without password
+src="/home/.snapshots/$snp/snapshot/${user}"
+rsync_opt="-a --delete --delete-excluded --stats --exclude-from=$exc --numeric-ids"
+rsync -e "ssh $ssh_opt" $rsync_opt --rsync-path='sudo rsync' $src ${rsync_dest}
+
+# Backup directory should reflect the backup time
+ssh $ssh_opt $ssh_dest "touch ${nas_dir}"
+
+# Delete snapper snapshot
+snapper -c home delete $snp
+
+Say "finished $host home-backup" "info"
+
+cleanup_exit 0

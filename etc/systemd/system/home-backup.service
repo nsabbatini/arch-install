@@ -1,0 +1,8 @@
+[Unit]
+Description="Runs home-backup utility"
+Wants=network-online.target
+After=network-online.target systemd-suspend.service snapshot-weekly.service snapshot-monthly.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemd-inhibit --what=idle:sleep:shutdown --why="home-backup is running" /usr/local/bin/home-backup

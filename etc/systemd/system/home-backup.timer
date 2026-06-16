@@ -1,0 +1,12 @@
+[Unit]
+Description="Calls service for backup utility once a day"
+
+[Timer]
+Persistent=false
+OnCalendar=*-*-* 5:00:00
+WakeSystem=true
+RandomizedDelaySec=120
+Unit=home-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -54,6 +54,13 @@ echo "Creating disk mounts for NAS shares"
 mkdir -p /mnt/{backups,$user,Music,Pictures,Videos}
 chown $user:$user /mnt/{$user,Music,Pictures,Videos}
 
+# prometheus and grafana may appear in nfs shares, therefore it is desirable to choose
+# their uid/gid and make them the same across machines
+groupadd -g 151 prometheus
+groupadd -g 150 grafana
+useradd -u 151 -g 151 --system -M -s /bin/false prometheus
+useradd -u 150 -g 150 --system -M -s /bin/false grafana
+
 echo "Enabling systemd services..."
 systemctl daemon-reload
 systemctl enable nftables
