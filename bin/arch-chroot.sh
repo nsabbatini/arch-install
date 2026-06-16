@@ -54,12 +54,14 @@ echo "Creating disk mounts for NAS shares"
 mkdir -p /mnt/{backups,$user,Music,Pictures,Videos}
 chown $user:$user /mnt/{$user,Music,Pictures,Videos}
 
-# prometheus and grafana may appear in nfs shares, therefore it is desirable to choose
-# their uid/gid and make them the same across machines
+# prometheus, grafana and uosserver may appear in nfs shares, therefore it is
+# desirable to choose their uid/gid and make them the same across machines
 groupadd -g 151 prometheus
 groupadd -g 150 grafana
+groupadd -g 1001 uosserver
 useradd -u 151 -g 151 --system -M -s /bin/false prometheus
 useradd -u 150 -g 150 --system -M -s /bin/false grafana
+useradd -u 1001 -g 1001 -M -s /bin/false uosserver
 
 echo "Enabling systemd services..."
 systemctl daemon-reload
