@@ -3,7 +3,7 @@ Description=NFS mount (videos on cobra)
 After=wait-for-ping.service
 
 [Mount]
-What=192.168.1.84:/videos
+What=cobra.localdomain:/videos
 Where=/mnt/Videos
 Type=nfs4
 TimeoutSec=20s

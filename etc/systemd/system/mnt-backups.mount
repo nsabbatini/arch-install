@@ -3,7 +3,7 @@ Description=NFS mount (linux-backup on cobra)
 After=wait-for-ping.service
 
 [Mount]
-What=192.168.1.84:/backups
+What=cobra.localdomain:/backups
 Where=/mnt/backups
 Type=nfs4
 TimeoutSec=20s

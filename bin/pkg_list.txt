@@ -177,6 +177,7 @@ mpv
 mpv-mpris
 haruna
 digikam
+spotify-launcher
 
 # Fonts
 adobe-source-sans-fonts
@@ -202,6 +203,9 @@ swtpm
 
 # Themes
 breeze-grub
+
+# Yubikey command line. Install also Yubico Authenticator from flatpak
+yubikey-commander
 
 # Extra
 # This package has problems with virt-manager menus

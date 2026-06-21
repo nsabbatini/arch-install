@@ -3,7 +3,7 @@ Description=NFS mount (narcizo on cobra)
 After=wait-for-ping.service
 
 [Mount]
-What=192.168.1.84:/narcizo
+What=cobra.localdomain:/narcizo
 Where=/mnt/narcizo
 Type=nfs4
 TimeoutSec=20s
