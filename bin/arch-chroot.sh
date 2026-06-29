@@ -95,6 +95,7 @@ systemctl enable snapper-cleanup.timer
 systemctl enable grub-btrfsd.service
 systemctl enable nfs-utils
 systemctl enable nfs-client.target
+systemctl enable btrfs-scrub@dev-nvme0n1p3.timer
 
 echo ""
 echo "#############################"

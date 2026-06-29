@@ -1,6 +1,5 @@
 [Unit]
 Description=NFS mount (linux-backup on cobra)
-After=wait-for-ping.service
 
 [Mount]
 What=cobra.localdomain:/backups
