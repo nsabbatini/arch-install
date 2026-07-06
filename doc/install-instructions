@@ -111,6 +111,7 @@ ssh-keyscan 192.168.1.1 | sudo tee -a /etc/ssh/ssh_known_hosts
 ssh-keyscan 192.168.1.42 | sudo tee -a /etc/ssh/ssh_known_hosts
 ssh-keyscan 192.168.1.84 | sudo tee -a /etc/ssh/ssh_known_hosts
 ssh-keyscan 192.168.1.104 | sudo tee -a /etc/ssh/ssh_known_hosts
+ssh-keyscan unvr-home.cam.localdomain | sudo tee -a /etc/ssh/ssh_known_hosts
 # The above commands do not work for pluto, so remove .ssh/known_hosts, connect to pluto via ssh:
 ssh pluto.sabbatini.xyz
 # then append .ssh/known_hosts to /etc/ssh/ssh_known_hosts
