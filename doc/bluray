@@ -1,0 +1,18 @@
+# Install makemkv from flathub, then open flatseal and give makemkv write permission to "all user files"
+# It also needs this kernel module:
+sudo modprobe sg
+echo sg | sudo tee /etc/modules-load.d/sg.conf
+
+# Install handbrake with support for bluray decryption
+sudo pacman -S handbrake libaacs libbluray
+# Download keydb.cfg from https://fvonline-db.bplaced.net
+mkdir ~/.config/aacs
+mv ~/Download/keydb.cfg ~/.config/aacs/KEYDB.cfg
+# This should be enough for handbrake. For vlc, we still need:
+sudo pacman -S jre17-openjdk vlc-plugin-all
+
+# In order to play, insert the bluray disk and click mount when the pop-up appears
+# Running from VLC
+# Right-click -> Open Media -> Open Disk -> Select 'Blu-ray' and 'No disc menues', then 'Play'
+# Running from mvp:
+mpv /run/media/narcizo/<Title>

@@ -1,0 +1,124 @@
+On the Gigabyte Z390 AORUS MASTER, fan headers are split across two separate Super I/O controller chips: the primary ITE IT8688E and an auxiliary ITE IT8792E. [1, 2, 3] 
+Because third-party programs like [Fan Control](https://github.com/Rem0o/FanControl.Releases/issues/69) or AIDA64 often struggle to read the secondary chip, matching the physical motherboard headers to the correct controller chip is essential: [1, 2] 
+## 🛠️ Controller to Header Mapping
+
+* 
+* ITE IT8688E (Primary Chip)
+* CPU_FAN (Top right, next to RAM)
+   * CPU_OPT (Top right, next to CPU_FAN)
+   * SYS_FAN1 (Bottom edge, near front-panel headers)
+   * SYS_FAN2 (Bottom edge, near front-panel headers)
+   * SYS_FAN3 (Bottom edge, near USB headers) [1, 4, 5, 6, 7] 
+* ITE IT8792E (Secondary Chip)
+* SYS_FAN4 (Right edge, next to the 24-pin ATX power connector)
+   * SYS_FAN5_PUMP (Bottom edge, left of SYS_FAN3)
+   * SYS_FAN6_PUMP (Bottom edge, left of SYS_FAN5_PUMP) [1, 2, 4] 
+* 
+
+------------------------------
+## ⚠️ Software Issues & Workarounds
+
+* 
+* The Problem: Third-party fan control programs usually only detect and control the fans hooked up to the IT8688E chip (CPU_FAN, CPU_OPT, SYS_FAN1, 2, 3). If you hook case fans up to SYS_FAN4, 5, or 6, the software will either report static readings or won't change their speeds at all. [1, 2] 
+* The Solution: If you plan on using software to manage your curves, use PWM fan splitters to group your chassis fans together and plug them strictly into SYS_FAN1, SYS_FAN2, or SYS_FAN3. [8, 9] 
+* The Exception: If you must use headers 4, 5, or 6, manage their fan profiles natively through Smart Fan 5 inside the motherboard BIOS, which controls both chips perfectly. [1, 10] 
+* 
+
+If you are using a specific app like Fan Control, let me know if you need help finding a experimental plug-in for the secondary chip, or if you need the exact AIDA64 index numbers for your layout!
+
+
+When using [CoolerControl](https://docs.coolercontrol.org/) on Linux, it relies entirely on the kernel's hwmon driver subsystem to view and control fans. [1]
+On your Gigabyte Z390 AORUS MASTER, the primary IT8688E will usually map to hwmon4, and the secondary IT8792E will map to hwmon5 (though the exact numbers can vary depending on your kernel and other connected devices like AIOs or GPUs). [2, 3]
+Because Gigabyte hardware uses non-standard implementations for these dual ITE chips, you must configure a specific kernel module bypass and apply a unique BIOS trick to get CoolerControl to manage them. [4, 5]
+## 1. Force Linux to Load Both Chips
+By default, the Linux kernel refuses to touch the secondary chip because the motherboard's ACPI firmware claims the memory resource. You must force the it87 driver to ignore this resource conflict. [5, 6]
+
+   1. Open your terminal and add the ACPI lax parameter to your boot loader. For GRUB, edit the configuration file:
+
+   sudo nano /etc/default/grub
+
+   2. Find the line starting with GRUB_CMDLINE_LINUX_DEFAULT and append acpi_enforce_resources=lax inside the quotes:
+
+   GRUB_CMDLINE_LINUX_DEFAULT="quiet splash acpi_enforce_resources=lax"
+
+   3. Save the file and update your bootloader:
+
+   sudo update-grub
+
+   4. Next, configure the driver behavior. Create or edit the it87 modprobe file:
+
+   sudo nano /etc/modprobe.d/it87.conf
+
+   5. Add the following line to allow the driver to bind to both the IT8688E and IT8792E chips simultaneously:
+
+   options it87 ignore_resource_conflict=1
+
+   6. Reboot your computer. [6]
+
+## 2. Apply the Gigabyte BIOS Trick (Crucial)
+Gigabyte motherboards feature a hardware lock. If a fan header is set to "Auto," "Normal," or a fixed speed profile in Smart Fan 5, the motherboard firmware blocks CoolerControl from overriding the PWM signals. [4, 6, 7]
+
+   1. Reboot your PC and enter the BIOS (press Delete). [8]
+   2. Open Smart Fan 5.
+   3. For every fan header you intend to control with CoolerControl, change its profile from "Normal" or "Silent" to Manual. [4]
+   4. Set up a dummy 7-point fan curve. Ensure the final point on the curve is set to escalate to 100% duty cycle at higher temperatures (e.g., 70°C+). [7]
+   5. Save settings and boot into Linux. This specific manual curve setup signals the ITE chips to yield manual PWM controls (pwm_enable=1) over to the operating system. [7, 9, 10, 11]
+
+## 3. Map the Hardware in CoolerControl
+Once you open the CoolerControl GUI, both chips will display under your local system devices. You can identify which target header maps to each chip path: [12]
+
+| Motherboard Header | Linux Device Path Example | Controller Chip Source |
+|---|---|---|
+| CPU_FAN | /sys/class/hwmon/hwmon4/pwm1 | IT8688E (Primary) |
+| CPU_OPT | /sys/class/hwmon/hwmon4/pwm5 | IT8688E (Primary) |
+| SYS_FAN1 | /sys/class/hwmon/hwmon4/pwm2 | IT8688E (Primary) |
+| SYS_FAN2 | /sys/class/hwmon/hwmon4/pwm3 | IT8688E (Primary) |
+| SYS_FAN3 | /sys/class/hwmon/hwmon4/pwm4 | IT8688E (Primary) |
+| SYS_FAN4 | /sys/class/hwmon/hwmon5/pwm1 | IT8792E (Secondary) |
+| SYS_FAN5_PUMP | /sys/class/hwmon/hwmon5/pwm2 | IT8792E (Secondary) |
+| SYS_FAN6_PUMP | /sys/class/hwmon/hwmon5/pwm3 | IT8792E (Secondary) |
+
+Note: If your liquid cooling pump is connected to SYS_FAN5 or SYS_FAN6, it is highly recommended to flag those specific headers as Unmanaged in CoolerControl to let the BIOS handle them safely at a constant high voltage. [7, 13]
+Would you like help verifying if both hwmon chips are recognized by the system using lm-sensors command line tools before configuring your CoolerControl curves? [14]
+
+
+On the Gigabyte Z390 AORUS MASTER, the physical temperature sensors are split across the same two Super I/O controllers. [1, 2]
+Because the it87 driver dynamically numbers things as temp1, temp2, etc., based on the chip it connects to, you have to look at the hwmon chip index to determine the actual motherboard location. [1, 3, 4]
+The specific mapping for the default kernel driver configuration breaks down as follows:
+## 🌡️ ITE IT8688E (Primary Chip / Typically hwmon4)
+The primary controller handles the core motherboard components, including the internal VRM and PCIe tracking circuits. [1]
+
+*
+* temp1 (System 1): Main motherboard ambient sensor. Located near the bottom-left edge of the board, just above the audio capacitors.
+* temp2 (Chipset / PCH): Located directly under the large metal AORUS heatsink covering the Intel Z390 Southbridge chipset.
+* temp3 (CPU Socket): A sensor placed directly underneath the physical CPU bracket on the motherboard PCB (not the internal CPU core temp).
+* temp4 (PCIe x16 Slot): Placed right beneath the primary graphics card slot to monitor ambient graphics card exhaust heat.
+* temp5 (VRM MOS): Tracks the temperature of the main 12-phase CPU power delivery phases. It is embedded directly under the heavily-finned VRM heatsinks.
+* temp6 (VSOC MOS): Tracks the temperature of the SoC/Uncore voltage phase rails, located under the top VRM heatsink block. [5, 6, 7, 8, 9]
+*
+
+------------------------------
+## 🌡️ ITE IT8792E (Secondary Chip / Typically hwmon5)
+The auxiliary chip handles general chassis ambient tracking and external expansion ports, including the physical headers you can plug liquid-cooling probes into. [10, 11]
+
+*
+* temp1 (System 2): General secondary motherboard ambient loop. Located near the right edge of the board, below the 24-pin ATX power connector.
+* temp2 (EC_TEMP1 Header): The lower physical 2-pin header on the bottom edge of the board (near the front panel connector). It tracks whatever external thermal probe wire you plug into it. [10, 12]
+* temp3 (EC_TEMP2 Header): The upper physical 2-pin header located near the right edge of the board (close to the SATA ports). It reads an external probe wire. [10]
+*
+
+------------------------------
+## 💡 Linux Verification Trick
+If you are ever unsure whether hwmon4 or hwmon5 shifted positions on a system reboot, run this command in your terminal:
+
+sensors
+
+Look at the headers labeled it8688-... and it8792-....
+
+*
+* The chip showing temp5 sitting around 40°C–60°C under load is your VRM (it8688).
+* If temp2 or temp3 under the it8792 block reads exactly -128°C or 0°C, those are your EC_TEMP headers with nothing physically plugged into them. [10]
+*
+
+Are you looking to tie specific chassis fan curves to your VRM temperatures inside CoolerControl, or are you utilizing external water loop probes on the EC headers? [10, 11]
+
